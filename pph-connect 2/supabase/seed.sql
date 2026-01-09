@@ -533,7 +533,59 @@ ON CONFLICT (worker_id, project_id, gate_name) DO UPDATE SET
   updated_at = NOW();
 
 -- ============================================================================
--- 16. VERIFICATION QUERIES
+-- 16. WORKER TRAINING ACCESS
+-- ============================================================================
+-- Track worker access to training materials and completion status
+-- NOTE: UUIDs use hex characters only (0-9, a-f). Using 'ab' prefix for worker_training_access IDs.
+-- Training materials IDs: 01111111-0666662 (from seed data above)
+-- Workers: b1111111-b9999999
+INSERT INTO public.worker_training_access (id, worker_id, training_material_id, granted_at, completed_at)
+VALUES
+  -- John Doe (b1111111) - Voice Assistant Training materials - all completed
+  ('ab111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', '01111111-1111-1111-1111-111111111111', NOW() - INTERVAL '30 days', NOW() - INTERVAL '28 days'),
+  ('ab111112-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', '01111112-1111-1111-1111-111111111111', NOW() - INTERVAL '30 days', NOW() - INTERVAL '27 days'),
+  ('ab111113-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', '01111113-1111-1111-1111-111111111111', NOW() - INTERVAL '30 days', NOW() - INTERVAL '26 days'),
+  ('ab111114-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', '01111114-1111-1111-1111-111111111111', NOW() - INTERVAL '30 days', NOW() - INTERVAL '25 days'),
+
+  -- Jane Smith (b2222222) - Voice Assistant Training materials - partially completed
+  ('ab222221-2222-2222-2222-222222222222', 'b2222222-2222-2222-2222-222222222222', '01111111-1111-1111-1111-111111111111', NOW() - INTERVAL '20 days', NOW() - INTERVAL '19 days'),
+  ('ab222222-2222-2222-2222-222222222222', 'b2222222-2222-2222-2222-222222222222', '01111112-1111-1111-1111-111111111111', NOW() - INTERVAL '20 days', NOW() - INTERVAL '18 days'),
+  ('ab222223-2222-2222-2222-222222222222', 'b2222222-2222-2222-2222-222222222222', '01111113-1111-1111-1111-111111111111', NOW() - INTERVAL '20 days', NULL),
+  ('ab222224-2222-2222-2222-222222222222', 'b2222222-2222-2222-2222-222222222222', '01111114-1111-1111-1111-111111111111', NOW() - INTERVAL '20 days', NULL),
+
+  -- Carlos Garcia (b3333333) - Spanish Audio materials - all completed
+  ('ab333331-3333-3333-3333-333333333333', 'b3333333-3333-3333-3333-333333333333', '03333331-3333-3333-3333-333333333333', NOW() - INTERVAL '45 days', NOW() - INTERVAL '43 days'),
+  ('ab333332-3333-3333-3333-333333333333', 'b3333333-3333-3333-3333-333333333333', '03333332-3333-3333-3333-333333333333', NOW() - INTERVAL '45 days', NOW() - INTERVAL '42 days'),
+  ('ab333333-3333-3333-3333-333333333333', 'b3333333-3333-3333-3333-333333333333', '03333333-3333-3333-3333-333333333333', NOW() - INTERVAL '45 days', NOW() - INTERVAL '41 days'),
+
+  -- Priya Patel (b4444444) - Sentiment Analysis materials - in progress
+  ('ab444441-4444-4444-4444-444444444444', 'b4444444-4444-4444-4444-444444444444', '04444441-4444-4444-4444-444444444444', NOW() - INTERVAL '14 days', NOW() - INTERVAL '13 days'),
+  ('ab444442-4444-4444-4444-444444444444', 'b4444444-4444-4444-4444-444444444444', '04444442-4444-4444-4444-444444444444', NOW() - INTERVAL '14 days', NULL),
+  ('ab444443-4444-4444-4444-444444444444', 'b4444444-4444-4444-4444-444444444444', '04444443-4444-4444-4444-444444444444', NOW() - INTERVAL '14 days', NULL),
+
+  -- Li Wei (b6666666) - Medical Image materials - all completed (expert)
+  ('ab666661-6666-6666-6666-666666666666', 'b6666666-6666-6666-6666-666666666666', '02222221-2222-2222-2222-222222222222', NOW() - INTERVAL '60 days', NOW() - INTERVAL '58 days'),
+  ('ab666662-6666-6666-6666-666666666666', 'b6666666-6666-6666-6666-666666666666', '02222222-2222-2222-2222-222222222222', NOW() - INTERVAL '60 days', NOW() - INTERVAL '57 days'),
+  ('ab666663-6666-6666-6666-666666666666', 'b6666666-6666-6666-6666-666666666666', '02222223-2222-2222-2222-222222222222', NOW() - INTERVAL '60 days', NOW() - INTERVAL '55 days'),
+  ('ab666664-6666-6666-6666-666666666666', 'b6666666-6666-6666-6666-666666666666', '02222224-2222-2222-2222-222222222222', NOW() - INTERVAL '60 days', NOW() - INTERVAL '54 days'),
+
+  -- Sophie Mueller (b7777777) - Medical Image materials - starting
+  ('ab777771-7777-7777-7777-777777777777', 'b7777777-7777-7777-7777-777777777777', '02222221-2222-2222-2222-222222222222', NOW() - INTERVAL '7 days', NOW() - INTERVAL '6 days'),
+  ('ab777772-7777-7777-7777-777777777777', 'b7777777-7777-7777-7777-777777777777', '02222222-2222-2222-2222-222222222222', NOW() - INTERVAL '7 days', NULL),
+  ('ab777773-7777-7777-7777-777777777777', 'b7777777-7777-7777-7777-777777777777', '02222223-2222-2222-2222-222222222222', NOW() - INTERVAL '7 days', NULL),
+  ('ab777774-7777-7777-7777-777777777777', 'b7777777-7777-7777-7777-777777777777', '02222224-2222-2222-2222-222222222222', NOW() - INTERVAL '7 days', NULL),
+
+  -- Yuki Tanaka (b9999999) - Medical Image materials - just granted
+  ('ab999991-9999-9999-9999-999999999999', 'b9999999-9999-9999-9999-999999999999', '02222221-2222-2222-2222-222222222222', NOW() - INTERVAL '2 days', NULL),
+  ('ab999992-9999-9999-9999-999999999999', 'b9999999-9999-9999-9999-999999999999', '02222222-2222-2222-2222-222222222222', NOW() - INTERVAL '2 days', NULL),
+  ('ab999993-9999-9999-9999-999999999999', 'b9999999-9999-9999-9999-999999999999', '02222223-2222-2222-2222-222222222222', NOW() - INTERVAL '2 days', NULL),
+  ('ab999994-9999-9999-9999-999999999999', 'b9999999-9999-9999-9999-999999999999', '02222224-2222-2222-2222-222222222222', NOW() - INTERVAL '2 days', NULL)
+ON CONFLICT (id) DO UPDATE SET
+  granted_at = EXCLUDED.granted_at,
+  completed_at = EXCLUDED.completed_at;
+
+-- ============================================================================
+-- 17. VERIFICATION QUERIES
 -- ============================================================================
 -- Display summary of seeded data
 DO $$
@@ -551,6 +603,7 @@ DECLARE
   locale_count INT;
   training_mat_count INT;
   training_gate_count INT;
+  training_access_count INT;
 BEGIN
   SELECT COUNT(*) INTO dept_count FROM public.departments;
   SELECT COUNT(*) INTO profile_count FROM public.profiles;
@@ -565,6 +618,7 @@ BEGIN
   SELECT COUNT(*) INTO locale_count FROM public.locale_mappings;
   SELECT COUNT(*) INTO training_mat_count FROM public.training_materials;
   SELECT COUNT(*) INTO training_gate_count FROM public.training_gates;
+  SELECT COUNT(*) INTO training_access_count FROM public.worker_training_access;
 
   RAISE NOTICE '============================================================================';
   RAISE NOTICE 'SEED DATA SUMMARY';
@@ -582,6 +636,7 @@ BEGIN
   RAISE NOTICE 'Locale Mappings:       % records', locale_count;
   RAISE NOTICE 'Training Materials:    % records', training_mat_count;
   RAISE NOTICE 'Training Gates:        % records', training_gate_count;
+  RAISE NOTICE 'Worker Training Access: % records', training_access_count;
   RAISE NOTICE '============================================================================';
 END $$;
 
