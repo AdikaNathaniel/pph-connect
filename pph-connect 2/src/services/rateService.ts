@@ -8,6 +8,9 @@ import type {
   LocaleMappingResult
 } from '@/lib/schemas/workStats'
 
+// Expert tier type matching the database enum (project_expert_tier)
+type ExpertTier = 'tier0' | 'tier1' | 'tier2'
+
 /**
  * Lookup worker and account by email
  * Returns worker_id, worker_account_id, and worker details for rate calculation
@@ -147,19 +150,20 @@ export async function lookupRate(
   expertTier: string,
   workDate: string
 ): Promise<RateLookupResult | null> {
+  // Cast to the expected enum type for TypeScript
+  const tier = expertTier as ExpertTier
+
   // Try to find exact match first
-  let query = supabase
+  const { data, error } = await supabase
     .from('rates_payable')
     .select('rate_per_unit, rate_per_hour, currency')
     .eq('locale', locale)
     .eq('country', country)
-    .eq('expert_tier', expertTier)
+    .eq('expert_tier', tier)
     .lte('effective_from', workDate)
     .or(`effective_to.is.null,effective_to.gte.${workDate}`)
     .order('effective_from', { ascending: false })
     .limit(1)
-
-  const { data, error } = await query
 
   if (!error && data && data.length > 0) {
     return {
@@ -174,7 +178,7 @@ export async function lookupRate(
     .from('rates_payable')
     .select('rate_per_unit, rate_per_hour, currency')
     .eq('locale', locale)
-    .eq('expert_tier', expertTier)
+    .eq('expert_tier', tier)
     .lte('effective_from', workDate)
     .or(`effective_to.is.null,effective_to.gte.${workDate}`)
     .order('effective_from', { ascending: false })

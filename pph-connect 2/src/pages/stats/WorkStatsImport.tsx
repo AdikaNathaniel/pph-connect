@@ -44,7 +44,7 @@ import {
   insertWorkStats,
   lookupRate,
   calculateEarnings,
-} from '@/services/workStatsService'
+} from '@/services/rateService'
 
 const REQUIRED_COLUMNS = [
   'worker_account_email',
