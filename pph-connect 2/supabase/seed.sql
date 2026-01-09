@@ -282,7 +282,73 @@ ON CONFLICT (id) DO UPDATE SET
   earnings = EXCLUDED.earnings;
 
 -- ============================================================================
--- 12. VERIFICATION QUERIES
+-- 12. RATES PAYABLE (Rate Cards)
+-- ============================================================================
+-- Rate cards for different locale + tier + country combinations
+-- expert_tier values: tier0, tier1, tier2
+-- Rates are per unit or per hour depending on project type
+INSERT INTO public.rates_payable (id, locale, expert_tier, country, rate_per_unit, rate_per_hour, currency, effective_from, effective_to, created_at, created_by)
+VALUES
+  -- English (US) Rate Cards - All tiers
+  ('e1111111-1111-1111-1111-111111111111', 'en', 'tier0', 'United States', 0.15, 18.00, 'USD', '2024-01-01', NULL, NOW(), 'b1111111-1111-1111-1111-111111111111'),
+  ('e1111112-1111-1111-1111-111111111111', 'en', 'tier1', 'United States', 0.20, 25.00, 'USD', '2024-01-01', NULL, NOW(), 'b1111111-1111-1111-1111-111111111111'),
+  ('e1111113-1111-1111-1111-111111111111', 'en', 'tier2', 'United States', 0.30, 35.00, 'USD', '2024-01-01', NULL, NOW(), 'b1111111-1111-1111-1111-111111111111'),
+
+  -- Spanish (Spain) Rate Cards - All tiers
+  ('e2222221-2222-2222-2222-222222222222', 'es', 'tier0', 'Spain', 0.12, 15.00, 'EUR', '2024-01-01', NULL, NOW(), 'b3333333-3333-3333-3333-333333333333'),
+  ('e2222222-2222-2222-2222-222222222222', 'es', 'tier1', 'Spain', 0.18, 22.00, 'EUR', '2024-01-01', NULL, NOW(), 'b3333333-3333-3333-3333-333333333333'),
+  ('e2222223-2222-2222-2222-222222222222', 'es', 'tier2', 'Spain', 0.25, 30.00, 'EUR', '2024-01-01', NULL, NOW(), 'b3333333-3333-3333-3333-333333333333'),
+
+  -- German (Germany) Rate Cards - All tiers
+  ('e3333331-3333-3333-3333-333333333333', 'de', 'tier0', 'Germany', 0.14, 17.00, 'EUR', '2024-01-01', NULL, NOW(), 'b7777777-7777-7777-7777-777777777777'),
+  ('e3333332-3333-3333-3333-333333333333', 'de', 'tier1', 'Germany', 0.20, 24.00, 'EUR', '2024-01-01', NULL, NOW(), 'b7777777-7777-7777-7777-777777777777'),
+  ('e3333333-3333-3333-3333-333333333333', 'de', 'tier2', 'Germany', 0.28, 32.00, 'EUR', '2024-01-01', NULL, NOW(), 'b7777777-7777-7777-7777-777777777777'),
+
+  -- Chinese (China) Rate Cards - All tiers
+  ('e4444441-4444-4444-4444-444444444444', 'zh', 'tier0', 'China', 0.10, 12.00, 'USD', '2024-01-01', NULL, NOW(), 'b6666666-6666-6666-6666-666666666666'),
+  ('e4444442-4444-4444-4444-444444444444', 'zh', 'tier1', 'China', 0.15, 18.00, 'USD', '2024-01-01', NULL, NOW(), 'b6666666-6666-6666-6666-666666666666'),
+  ('e4444443-4444-4444-4444-444444444444', 'zh', 'tier2', 'China', 0.22, 25.00, 'USD', '2024-01-01', NULL, NOW(), 'b6666666-6666-6666-6666-666666666666'),
+
+  -- Hindi (India) Rate Cards - All tiers
+  ('e5555551-5555-5555-5555-555555555555', 'hi', 'tier0', 'India', 0.08, 10.00, 'USD', '2024-01-01', NULL, NOW(), 'b4444444-4444-4444-4444-444444444444'),
+  ('e5555552-5555-5555-5555-555555555555', 'hi', 'tier1', 'India', 0.12, 15.00, 'USD', '2024-01-01', NULL, NOW(), 'b4444444-4444-4444-4444-444444444444'),
+  ('e5555553-5555-5555-5555-555555555555', 'hi', 'tier2', 'India', 0.18, 22.00, 'USD', '2024-01-01', NULL, NOW(), 'b4444444-4444-4444-4444-444444444444'),
+
+  -- French (France) Rate Cards - All tiers
+  ('e6666661-6666-6666-6666-666666666666', 'fr', 'tier0', 'France', 0.13, 16.00, 'EUR', '2024-01-01', NULL, NOW(), 'b1111111-1111-1111-1111-111111111111'),
+  ('e6666662-6666-6666-6666-666666666666', 'fr', 'tier1', 'France', 0.19, 23.00, 'EUR', '2024-01-01', NULL, NOW(), 'b1111111-1111-1111-1111-111111111111'),
+  ('e6666663-6666-6666-6666-666666666666', 'fr', 'tier2', 'France', 0.27, 31.00, 'EUR', '2024-01-01', NULL, NOW(), 'b1111111-1111-1111-1111-111111111111'),
+
+  -- Japanese (Japan) Rate Cards - All tiers
+  ('e7777771-7777-7777-7777-777777777777', 'ja', 'tier0', 'Japan', 0.16, 20.00, 'USD', '2024-01-01', NULL, NOW(), 'b9999999-9999-9999-9999-999999999999'),
+  ('e7777772-7777-7777-7777-777777777777', 'ja', 'tier1', 'Japan', 0.22, 28.00, 'USD', '2024-01-01', NULL, NOW(), 'b9999999-9999-9999-9999-999999999999'),
+  ('e7777773-7777-7777-7777-777777777777', 'ja', 'tier2', 'Japan', 0.32, 38.00, 'USD', '2024-01-01', NULL, NOW(), 'b9999999-9999-9999-9999-999999999999'),
+
+  -- Arabic (Egypt) Rate Cards - All tiers
+  ('e8888881-8888-8888-8888-888888888888', 'ar', 'tier0', 'Egypt', 0.09, 11.00, 'USD', '2024-01-01', NULL, NOW(), 'b5555555-5555-5555-5555-555555555555'),
+  ('e8888882-8888-8888-8888-888888888888', 'ar', 'tier1', 'Egypt', 0.14, 17.00, 'USD', '2024-01-01', NULL, NOW(), 'b5555555-5555-5555-5555-555555555555'),
+  ('e8888883-8888-8888-8888-888888888888', 'ar', 'tier2', 'Egypt', 0.20, 24.00, 'USD', '2024-01-01', NULL, NOW(), 'b5555555-5555-5555-5555-555555555555'),
+
+  -- Portuguese (Brazil) Rate Cards - All tiers
+  ('e9999991-9999-9999-9999-999999999999', 'pt', 'tier0', 'Brazil', 0.10, 12.00, 'USD', '2024-01-01', NULL, NOW(), 'b8888888-8888-8888-8888-888888888888'),
+  ('e9999992-9999-9999-9999-999999999999', 'pt', 'tier1', 'Brazil', 0.15, 18.00, 'USD', '2024-01-01', NULL, NOW(), 'b8888888-8888-8888-8888-888888888888'),
+  ('e9999993-9999-9999-9999-999999999999', 'pt', 'tier2', 'Brazil', 0.22, 25.00, 'USD', '2024-01-01', NULL, NOW(), 'b8888888-8888-8888-8888-888888888888'),
+
+  -- Polish (Poland) Rate Cards - All tiers
+  ('ea000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'pl', 'tier0', 'Poland', 0.11, 13.00, 'EUR', '2024-01-01', NULL, NOW(), 'b0000000-1010-1010-1010-101010101010'),
+  ('ea000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'pl', 'tier1', 'Poland', 0.16, 20.00, 'EUR', '2024-01-01', NULL, NOW(), 'b0000000-1010-1010-1010-101010101010'),
+  ('ea000003-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'pl', 'tier2', 'Poland', 0.24, 28.00, 'EUR', '2024-01-01', NULL, NOW(), 'b0000000-1010-1010-1010-101010101010'),
+
+  -- Historical rate (expired) - English US tier1 from 2023
+  ('eb000001-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'en', 'tier1', 'United States', 0.18, 22.00, 'USD', '2023-01-01', '2023-12-31', NOW(), 'b1111111-1111-1111-1111-111111111111')
+ON CONFLICT (id) DO UPDATE SET
+  rate_per_unit = EXCLUDED.rate_per_unit,
+  rate_per_hour = EXCLUDED.rate_per_hour,
+  effective_from = EXCLUDED.effective_from,
+  effective_to = EXCLUDED.effective_to;
+
+-- ============================================================================
+-- 13. VERIFICATION QUERIES
 -- ============================================================================
 -- Display summary of seeded data
 DO $$
@@ -296,6 +362,7 @@ DECLARE
   pt_count INT;
   assignment_count INT;
   stats_count INT;
+  rates_count INT;
 BEGIN
   SELECT COUNT(*) INTO dept_count FROM public.departments;
   SELECT COUNT(*) INTO profile_count FROM public.profiles;
@@ -306,6 +373,7 @@ BEGIN
   SELECT COUNT(*) INTO pt_count FROM public.project_teams;
   SELECT COUNT(*) INTO assignment_count FROM public.worker_assignments WHERE removed_at IS NULL;
   SELECT COUNT(*) INTO stats_count FROM public.work_stats;
+  SELECT COUNT(*) INTO rates_count FROM public.rates_payable;
 
   RAISE NOTICE '============================================================================';
   RAISE NOTICE 'SEED DATA SUMMARY';
@@ -319,6 +387,7 @@ BEGIN
   RAISE NOTICE 'Project Teams:         % records', pt_count;
   RAISE NOTICE 'Worker Assignments:    % records (active)', assignment_count;
   RAISE NOTICE 'Work Stats:            % records', stats_count;
+  RAISE NOTICE 'Rates Payable:         % records', rates_count;
   RAISE NOTICE '============================================================================';
 END $$;
 
