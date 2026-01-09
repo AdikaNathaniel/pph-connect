@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronsUpDown,
   CirclePlus,
+  BarChart3,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -65,6 +66,7 @@ export function AppLayout({ children, pageTitle }: AppLayoutProps) {
           { title: 'Projects', href: '/projects', icon: FolderOpen },
           { title: 'Teams', href: '/teams', icon: UserCheck },
           { title: 'Departments', href: '/departments', icon: Building2 },
+          { title: 'Stats', href: '/stats', icon: BarChart3 },
           { title: 'Messages', href: '/messages', icon: Mail },
         ],
       },

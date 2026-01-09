@@ -1,5 +1,9 @@
 import { z } from 'zod'
 
+// UUID regex that accepts standard UUID format (8-4-4-4-12 hex characters)
+// More permissive than RFC 4122 strict validation to match database seed data
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 /**
  * Schema for validating work stats CSV row data
  *
@@ -13,9 +17,9 @@ import { z } from 'zod'
  * - earnings: Decimal earnings amount (optional)
  */
 export const workStatRowSchema = z.object({
-  worker_id: z.string().uuid('Invalid worker ID format'),
-  worker_account_id: z.string().uuid('Invalid worker account ID format').optional().nullable(),
-  project_id: z.string().uuid('Invalid project ID format'),
+  worker_id: z.string().regex(uuidRegex, 'Invalid worker ID format (use UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)'),
+  worker_account_id: z.string().regex(uuidRegex, 'Invalid worker account ID format').optional().nullable(),
+  project_id: z.string().regex(uuidRegex, 'Invalid project ID format (use UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)'),
   work_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (use YYYY-MM-DD)'),
   units_completed: z.coerce.number().int().nonnegative('Units must be non-negative').optional().nullable(),
   hours_worked: z.coerce.number().positive('Hours must be positive').max(24, 'Hours cannot exceed 24').optional().nullable(),

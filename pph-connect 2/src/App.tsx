@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { Login } from '@/pages/Login'
 import { Dashboard } from '@/pages/Dashboard'
 import { WorkerList } from '@/pages/workers/WorkerList'
@@ -17,12 +18,15 @@ import { DepartmentList } from '@/pages/departments/DepartmentList'
 import { DepartmentCreate } from '@/pages/departments/DepartmentCreate'
 import { DepartmentEdit } from '@/pages/departments/DepartmentEdit'
 import WorkStatsImport from '@/pages/stats/WorkStatsImport'
+import { StatsPage } from '@/pages/stats/StatsPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AppLayout } from '@/components/layout/AppLayout'
 
 function App() {
   return (
-    <Routes>
+    <>
+      <Toaster richColors position="top-right" />
+      <Routes>
       <Route path="/login" element={<Login />} />
       <Route
         path="/dashboard"
@@ -185,6 +189,16 @@ function App() {
         }
       />
       <Route
+        path="/stats"
+        element={
+          <ProtectedRoute>
+            <AppLayout pageTitle="Work Stats">
+              <StatsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/stats/import"
         element={
           <ProtectedRoute>
@@ -196,6 +210,7 @@ function App() {
       />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
     </Routes>
+    </>
   )
 }
 

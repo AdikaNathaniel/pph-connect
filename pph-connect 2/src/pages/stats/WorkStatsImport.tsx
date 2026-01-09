@@ -71,15 +71,16 @@ export default function WorkStatsImport() {
   const downloadTemplate = () => {
     const allColumns = [...REQUIRED_COLUMNS, ...OPTIONAL_COLUMNS]
 
-    // Example rows with realistic data from seed file
+    // Column order: worker_id, project_id, work_date, worker_account_id, units_completed, hours_worked, earnings
+    // Uses REAL IDs from the database seed data so template works out of the box
     const template = [
       allColumns.join(','),
-      // Example 1: Complete row with all fields
-      'b1111111-1111-1111-1111-111111111111,c1111111-1111-1111-1111-111111111111,d1111111-1111-1111-1111-111111111111,2025-01-08,150,8,200.00',
-      // Example 2: Row with optional fields as empty
-      'b2222222-2222-2222-2222-222222222222,,d1111111-1111-1111-1111-111111111111,2025-01-07,180,8,200.00',
-      // Example 3: Minimal required fields only
-      'b3333333-3333-3333-3333-333333333333,,d3333333-3333-3333-3333-333333333333,2025-01-06,,,',
+      // Example 1: John Doe (b1111111) working on Voice Assistant Training (d1111111) with his Maestro account (c1111111)
+      'b1111111-1111-1111-1111-111111111111,d1111111-1111-1111-1111-111111111111,2025-01-08,c1111111-1111-1111-1111-111111111111,150,8,200.00',
+      // Example 2: Jane Smith (b2222222) working on Voice Assistant Training (d1111111) with her Maestro account (c2222221)
+      'b2222222-2222-2222-2222-222222222222,d1111111-1111-1111-1111-111111111111,2025-01-07,c2222221-2222-2222-2222-222222222222,180,8,200.00',
+      // Example 3: Carlos Garcia (b3333333) working on Spanish Audio Transcription (d3333333) with his Maestro account (c3333331)
+      'b3333333-3333-3333-3333-333333333333,d3333333-3333-3333-3333-333333333333,2025-01-06,c3333331-3333-3333-3333-333333333333,100,6,150.00',
     ].join('\n')
 
     const blob = new Blob([template], { type: 'text/csv' })
@@ -141,97 +142,195 @@ export default function WorkStatsImport() {
 
   // Validate CSV file
   const validateFile = async () => {
-    if (!file) return
+    if (!file) {
+      toast({
+        variant: 'destructive',
+        title: 'No File Selected',
+        description: 'Please select a CSV file first',
+      })
+      return
+    }
 
     setIsValidating(true)
     setErrors([])
     setValidRows([])
 
-    Papa.parse<Record<string, string>>(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results) => {
-        const validationErrors: WorkStatValidationError[] = []
-        const parsedValidRows: WorkStatRow[] = []
-
-        // Check for required columns
-        const headers = Object.keys(results.data[0] || {})
-        const missingColumns = REQUIRED_COLUMNS.filter((col) => !headers.includes(col))
-
-        if (missingColumns.length > 0) {
-          validationErrors.push({
-            row: 0,
-            field: 'headers',
-            message: `Missing required columns: ${missingColumns.join(', ')}`,
-          })
-          setErrors(validationErrors)
-          setIsValidating(false)
-          return
-        }
-
-        // Validate each row
-        for (let i = 0; i < results.data.length; i++) {
-          const rawRow = results.data[i]
-          const rowNumber = i + 2 // +2 for 1-based index and header row
-
+    try {
+      Papa.parse<Record<string, string>>(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
           try {
-            // Schema validation
-            const validatedRow = workStatRowSchema.parse({
-              worker_id: rawRow.worker_id?.trim(),
-              worker_account_id: rawRow.worker_account_id?.trim() || null,
-              project_id: rawRow.project_id?.trim(),
-              work_date: rawRow.work_date?.trim(),
-              units_completed: rawRow.units_completed?.trim() || null,
-              hours_worked: rawRow.hours_worked?.trim() || null,
-              earnings: rawRow.earnings?.trim() || null,
-            })
+            const validationErrors: WorkStatValidationError[] = []
+            const parsedValidRows: WorkStatRow[] = []
 
-            // Business logic validation
-            const businessErrors = await validateWorkStatRow(validatedRow, rowNumber)
-            if (businessErrors.length > 0) {
-              validationErrors.push(...businessErrors)
-            } else {
-              parsedValidRows.push(validatedRow)
-            }
-          } catch (error: any) {
-            const zodErrors = error.errors || []
-            zodErrors.forEach((zodError: any) => {
+            // Check if file has any data
+            if (!results.data || results.data.length === 0) {
               validationErrors.push({
-                row: rowNumber,
-                field: zodError.path.join('.'),
-                message: zodError.message,
-                data: rawRow as any,
+                row: 0,
+                field: 'file',
+                message: 'CSV file is empty or has no data rows',
               })
+              setErrors(validationErrors)
+              setIsValidating(false)
+              toast({
+                variant: 'destructive',
+                title: 'Empty File',
+                description: 'The CSV file contains no data rows',
+              })
+              return
+            }
+
+            // Check for required columns
+            const headers = Object.keys(results.data[0] || {})
+            const missingColumns = REQUIRED_COLUMNS.filter((col) => !headers.includes(col))
+
+            if (missingColumns.length > 0) {
+              validationErrors.push({
+                row: 0,
+                field: 'headers',
+                message: `Missing required columns: ${missingColumns.join(', ')}`,
+              })
+              setErrors(validationErrors)
+              setIsValidating(false)
+              toast({
+                variant: 'destructive',
+                title: 'Missing Columns',
+                description: `Required columns missing: ${missingColumns.join(', ')}`,
+              })
+              return
+            }
+
+            // Validate each row
+            for (let i = 0; i < results.data.length; i++) {
+              const rawRow = results.data[i]
+              const rowNumber = i + 2 // +2 for 1-based index and header row
+
+              try {
+                // Schema validation
+                const validatedRow = workStatRowSchema.parse({
+                  worker_id: rawRow.worker_id?.trim(),
+                  worker_account_id: rawRow.worker_account_id?.trim() || null,
+                  project_id: rawRow.project_id?.trim(),
+                  work_date: rawRow.work_date?.trim(),
+                  units_completed: rawRow.units_completed?.trim() || null,
+                  hours_worked: rawRow.hours_worked?.trim() || null,
+                  earnings: rawRow.earnings?.trim() || null,
+                })
+
+                // Business logic validation
+                const businessErrors = await validateWorkStatRow(validatedRow, rowNumber)
+                if (businessErrors.length > 0) {
+                  validationErrors.push(...businessErrors)
+                } else {
+                  parsedValidRows.push(validatedRow)
+                }
+              } catch (error: any) {
+                // Handle Zod validation errors
+                if (error.errors && Array.isArray(error.errors)) {
+                  error.errors.forEach((zodError: any) => {
+                    // Extract clean field name and message
+                    const fieldName = Array.isArray(zodError.path)
+                      ? zodError.path.join('.')
+                      : zodError.path || 'unknown'
+
+                    // Get clean error message
+                    let errorMessage = zodError.message
+                    if (typeof errorMessage !== 'string') {
+                      errorMessage = 'Invalid value'
+                    }
+
+                    // Make error messages more user-friendly
+                    if (errorMessage.includes('uuid') || errorMessage.includes('UUID')) {
+                      errorMessage = `Invalid UUID format for ${fieldName}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
+                    }
+
+                    validationErrors.push({
+                      row: rowNumber,
+                      field: fieldName,
+                      message: errorMessage,
+                      data: rawRow as any,
+                    })
+                  })
+                } else if (error.issues && Array.isArray(error.issues)) {
+                  // Handle Zod v3 format
+                  error.issues.forEach((issue: any) => {
+                    const fieldName = Array.isArray(issue.path)
+                      ? issue.path.join('.')
+                      : 'unknown'
+
+                    let errorMessage = issue.message || 'Invalid value'
+                    if (errorMessage.includes('uuid') || errorMessage.includes('UUID')) {
+                      errorMessage = `Invalid UUID format for ${fieldName}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
+                    }
+
+                    validationErrors.push({
+                      row: rowNumber,
+                      field: fieldName,
+                      message: errorMessage,
+                      data: rawRow as any,
+                    })
+                  })
+                } else {
+                  // Generic error
+                  validationErrors.push({
+                    row: rowNumber,
+                    field: 'unknown',
+                    message: typeof error.message === 'string' ? error.message : 'Validation error',
+                    data: rawRow as any,
+                  })
+                }
+              }
+            }
+
+            setErrors(validationErrors)
+            setValidRows(parsedValidRows)
+            setIsValidating(false)
+
+            if (validationErrors.length === 0 && parsedValidRows.length > 0) {
+              toast({
+                title: 'Validation Successful',
+                description: `${parsedValidRows.length} rows are valid and ready to import`,
+              })
+            } else if (parsedValidRows.length > 0) {
+              toast({
+                variant: 'destructive',
+                title: 'Validation Completed',
+                description: `${parsedValidRows.length} valid rows, ${validationErrors.length} error(s) found`,
+              })
+            } else {
+              toast({
+                variant: 'destructive',
+                title: 'Validation Failed',
+                description: `All ${validationErrors.length} rows have errors`,
+              })
+            }
+          } catch (err: any) {
+            setIsValidating(false)
+            toast({
+              variant: 'destructive',
+              title: 'Validation Error',
+              description: err.message || 'An error occurred during validation',
             })
           }
-        }
-
-        setErrors(validationErrors)
-        setValidRows(parsedValidRows)
-        setIsValidating(false)
-
-        if (validationErrors.length === 0) {
-          toast({
-            title: 'Validation Successful',
-            description: `${parsedValidRows.length} rows are valid and ready to import`,
-          })
-        } else {
+        },
+        error: (error) => {
+          setIsValidating(false)
           toast({
             variant: 'destructive',
-            title: 'Validation Errors Found',
-            description: `Found ${validationErrors.length} error(s) in the CSV file`,
+            title: 'Parse Error',
+            description: `Failed to parse CSV: ${error.message}`,
           })
-        }
-      },
-      error: (error) => {
-        setIsValidating(false)
-        toast({
-          variant: 'destructive',
-          title: 'Parse Error',
-          description: `Failed to parse CSV: ${error.message}`,
-        })
-      },
-    })
+        },
+      })
+    } catch (err: any) {
+      setIsValidating(false)
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: err.message || 'An unexpected error occurred',
+      })
+    }
   }
 
   // Import mutation
@@ -429,23 +528,40 @@ export default function WorkStatsImport() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Row</TableHead>
-                        <TableHead>Field</TableHead>
-                        <TableHead>Error</TableHead>
+                        <TableHead className="w-16">Row</TableHead>
+                        <TableHead className="w-32">Field</TableHead>
+                        <TableHead>Error Message</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {errors.slice(0, 50).map((error, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell>{error.row}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{error.field || 'general'}</Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {error.message}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {errors.slice(0, 50).map((error, idx) => {
+                        // Clean up the error message if it's JSON
+                        let displayMessage = error.message
+                        if (typeof displayMessage === 'string' && displayMessage.startsWith('[')) {
+                          try {
+                            const parsed = JSON.parse(displayMessage)
+                            if (Array.isArray(parsed)) {
+                              displayMessage = parsed.map((e: any) => e.message || 'Invalid value').join(', ')
+                            }
+                          } catch {
+                            // Keep original if not valid JSON
+                          }
+                        }
+
+                        return (
+                          <TableRow key={idx}>
+                            <TableCell className="font-mono text-sm">{error.row}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="font-mono text-xs">
+                                {error.field || 'general'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground max-w-md">
+                              {displayMessage}
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
                     </TableBody>
                   </Table>
                 </ScrollArea>
@@ -457,26 +573,33 @@ export default function WorkStatsImport() {
               </div>
             )}
 
-            {/* Import Button */}
-            {validRows.length > 0 && errors.length === 0 && (
-              <Button
-                onClick={handleImport}
-                disabled={importMutation.isPending}
-                className="w-full"
-                size="lg"
-              >
-                {importMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Importing {validRows.length} Record(s)...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Import {validRows.length} Work Stat Record(s)
-                  </>
+            {/* Import Button - Show when there are valid rows */}
+            {validRows.length > 0 && (
+              <div className="space-y-2">
+                {errors.length > 0 && (
+                  <p className="text-sm text-amber-600">
+                    Note: {errors.length} row(s) have errors and will be skipped. Only {validRows.length} valid row(s) will be imported.
+                  </p>
                 )}
-              </Button>
+                <Button
+                  onClick={handleImport}
+                  disabled={importMutation.isPending}
+                  className="w-full"
+                  size="lg"
+                >
+                  {importMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Importing {validRows.length} Record(s)...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Import {validRows.length} Valid Work Stat Record(s)
+                    </>
+                  )}
+                </Button>
+              </div>
             )}
 
             {/* Import Progress */}

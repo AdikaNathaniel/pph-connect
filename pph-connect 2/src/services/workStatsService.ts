@@ -182,6 +182,7 @@ export async function insertWorkStats(
     const batch = rows.slice(i, i + batchSize)
 
     // Prepare data for insertion
+    // created_by references profiles table (linked to auth.users)
     const insertData = batch.map((row) => {
       const baseData: any = {
         worker_id: row.worker_id,
