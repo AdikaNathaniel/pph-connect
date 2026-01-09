@@ -18,8 +18,8 @@ export const workStatCsvRowSchema = z.object({
   worker_account_email: z.string().email('Invalid email format'),
   project_code: z.string().min(1, 'Project code is required'),
   work_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (use YYYY-MM-DD)'),
-  units_completed: z.coerce.number().int().nonnegative('Units must be non-negative').optional().nullable(),
-  hours_worked: z.coerce.number().nonnegative('Hours must be non-negative').max(24, 'Hours cannot exceed 24').optional().nullable(),
+  units_completed: z.coerce.number().int().positive('Units must be greater than 0').optional().nullable(),
+  hours_worked: z.coerce.number().positive('Hours must be greater than 0').max(24, 'Hours cannot exceed 24').optional().nullable(),
   earnings: z.coerce.number().nonnegative('Earnings must be non-negative').optional().nullable(),
 })
 
@@ -33,8 +33,8 @@ export const workStatRowSchema = z.object({
   worker_account_id: z.string().regex(uuidRegex, 'Invalid worker account ID format').optional().nullable(),
   project_id: z.string().regex(uuidRegex, 'Invalid project ID format'),
   work_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (use YYYY-MM-DD)'),
-  units_completed: z.coerce.number().int().nonnegative('Units must be non-negative').optional().nullable(),
-  hours_worked: z.coerce.number().nonnegative('Hours must be non-negative').max(24, 'Hours cannot exceed 24').optional().nullable(),
+  units_completed: z.coerce.number().int().positive('Units must be greater than 0').optional().nullable(),
+  hours_worked: z.coerce.number().positive('Hours must be greater than 0').max(24, 'Hours cannot exceed 24').optional().nullable(),
   earnings: z.coerce.number().nonnegative('Earnings must be non-negative').optional().nullable(),
 })
 
