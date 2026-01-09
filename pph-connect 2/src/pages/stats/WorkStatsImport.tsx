@@ -32,20 +32,25 @@ import {
   FileSpreadsheet,
 } from 'lucide-react'
 import Papa from 'papaparse'
-import { workStatRowSchema, type WorkStatRow, type WorkStatValidationError } from '@/lib/schemas/workStats'
 import {
+  workStatCsvRowSchema,
+  type WorkStatCsvRow,
+  type WorkStatRow,
+  type WorkStatValidationError
+} from '@/lib/schemas/workStats'
+import {
+  resolveWorkStatRow,
   validateWorkStatRow,
   insertWorkStats,
 } from '@/services/workStatsService'
 
 const REQUIRED_COLUMNS = [
-  'worker_id',
-  'project_id',
+  'worker_account_email',
+  'project_code',
   'work_date',
 ]
 
 const OPTIONAL_COLUMNS = [
-  'worker_account_id',
   'units_completed',
   'hours_worked',
   'earnings',
@@ -67,20 +72,38 @@ export default function WorkStatsImport() {
     errors: WorkStatValidationError[]
   } | null>(null)
 
-  // Generate CSV template
+  // Generate CSV template with user-friendly columns and dynamic dates
   const downloadTemplate = () => {
     const allColumns = [...REQUIRED_COLUMNS, ...OPTIONAL_COLUMNS]
 
-    // Column order: worker_id, project_id, work_date, worker_account_id, units_completed, hours_worked, earnings
-    // Uses REAL IDs from the database seed data so template works out of the box
+    // Generate unique dates based on current timestamp to avoid duplicates
+    const now = new Date()
+    const baseDate = new Date(now)
+    // Use random offset starting from 30 days back (to avoid seed data which uses 7, 14, 21 days)
+    // Range: 30-200 days back to ensure no collision with existing data
+    const randomOffset = Math.floor(Math.random() * 170) + 30
+
+    const formatDate = (date: Date) => {
+      return date.toISOString().split('T')[0]
+    }
+
+    // Generate 3 different dates going backwards from the random offset
+    const date1 = new Date(baseDate)
+    date1.setDate(date1.getDate() - randomOffset)
+    const date2 = new Date(baseDate)
+    date2.setDate(date2.getDate() - randomOffset - 1)
+    const date3 = new Date(baseDate)
+    date3.setDate(date3.getDate() - randomOffset - 2)
+
+    // Uses real emails and project codes from seed data with dynamic dates
     const template = [
       allColumns.join(','),
-      // Example 1: John Doe (b1111111) working on Voice Assistant Training (d1111111) with his Maestro account (c1111111)
-      'b1111111-1111-1111-1111-111111111111,d1111111-1111-1111-1111-111111111111,2025-01-08,c1111111-1111-1111-1111-111111111111,150,8,200.00',
-      // Example 2: Jane Smith (b2222222) working on Voice Assistant Training (d1111111) with her Maestro account (c2222221)
-      'b2222222-2222-2222-2222-222222222222,d1111111-1111-1111-1111-111111111111,2025-01-07,c2222221-2222-2222-2222-222222222222,180,8,200.00',
-      // Example 3: Carlos Garcia (b3333333) working on Spanish Audio Transcription (d3333333) with his Maestro account (c3333331)
-      'b3333333-3333-3333-3333-333333333333,d3333333-3333-3333-3333-333333333333,2025-01-06,c3333331-3333-3333-3333-333333333333,100,6,150.00',
+      // Example 1: John Doe working on Voice Assistant Training
+      `john.doe@pph.com,VA-ENG-2024,${formatDate(date1)},150,8,200.00`,
+      // Example 2: Jane Smith working on Voice Assistant Training
+      `jane.smith@pph.com,VA-ENG-2024,${formatDate(date2)},180,8,200.00`,
+      // Example 3: Carlos Garcia working on Spanish Audio Transcription
+      `carlos.garcia@pph.com,AUD-SPA-2024,${formatDate(date3)},100,6,150.00`,
     ].join('\n')
 
     const blob = new Blob([template], { type: 'text/csv' })
@@ -107,8 +130,8 @@ export default function WorkStatsImport() {
       row: err.row,
       field: err.field || 'general',
       message: err.message,
-      worker_id: err.data?.worker_id || '',
-      project_id: err.data?.project_id || '',
+      worker_account_email: err.data?.worker_account_email || '',
+      project_code: err.data?.project_code || '',
       work_date: err.data?.work_date || '',
     }))
 
@@ -207,72 +230,75 @@ export default function WorkStatsImport() {
               const rowNumber = i + 2 // +2 for 1-based index and header row
 
               try {
-                // Schema validation
-                const validatedRow = workStatRowSchema.parse({
-                  worker_id: rawRow.worker_id?.trim(),
-                  worker_account_id: rawRow.worker_account_id?.trim() || null,
-                  project_id: rawRow.project_id?.trim(),
+                // Schema validation for CSV row
+                const csvRow: WorkStatCsvRow = workStatCsvRowSchema.parse({
+                  worker_account_email: rawRow.worker_account_email?.trim(),
+                  project_code: rawRow.project_code?.trim(),
                   work_date: rawRow.work_date?.trim(),
                   units_completed: rawRow.units_completed?.trim() || null,
                   hours_worked: rawRow.hours_worked?.trim() || null,
                   earnings: rawRow.earnings?.trim() || null,
                 })
 
+                // Resolve email/code to IDs
+                const { result: lookupResult, errors: lookupErrors } = await resolveWorkStatRow(csvRow, rowNumber)
+
+                if (lookupErrors.length > 0) {
+                  validationErrors.push(...lookupErrors)
+                  continue
+                }
+
+                if (!lookupResult) {
+                  continue
+                }
+
+                // Create resolved row with IDs
+                const resolvedRow: WorkStatRow = {
+                  worker_id: lookupResult.worker_id,
+                  worker_account_id: lookupResult.worker_account_id,
+                  project_id: lookupResult.project_id,
+                  work_date: csvRow.work_date,
+                  units_completed: csvRow.units_completed,
+                  hours_worked: csvRow.hours_worked,
+                  earnings: csvRow.earnings,
+                }
+
                 // Business logic validation
-                const businessErrors = await validateWorkStatRow(validatedRow, rowNumber)
+                const businessErrors = await validateWorkStatRow(resolvedRow, csvRow, rowNumber)
                 if (businessErrors.length > 0) {
                   validationErrors.push(...businessErrors)
                 } else {
-                  parsedValidRows.push(validatedRow)
+                  parsedValidRows.push(resolvedRow)
                 }
               } catch (error: any) {
                 // Handle Zod validation errors
                 if (error.errors && Array.isArray(error.errors)) {
                   error.errors.forEach((zodError: any) => {
-                    // Extract clean field name and message
                     const fieldName = Array.isArray(zodError.path)
                       ? zodError.path.join('.')
                       : zodError.path || 'unknown'
 
-                    // Get clean error message
-                    let errorMessage = zodError.message
-                    if (typeof errorMessage !== 'string') {
-                      errorMessage = 'Invalid value'
-                    }
-
-                    // Make error messages more user-friendly
-                    if (errorMessage.includes('uuid') || errorMessage.includes('UUID')) {
-                      errorMessage = `Invalid UUID format for ${fieldName}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
-                    }
-
                     validationErrors.push({
                       row: rowNumber,
                       field: fieldName,
-                      message: errorMessage,
+                      message: zodError.message || 'Invalid value',
                       data: rawRow as any,
                     })
                   })
                 } else if (error.issues && Array.isArray(error.issues)) {
-                  // Handle Zod v3 format
                   error.issues.forEach((issue: any) => {
                     const fieldName = Array.isArray(issue.path)
                       ? issue.path.join('.')
                       : 'unknown'
 
-                    let errorMessage = issue.message || 'Invalid value'
-                    if (errorMessage.includes('uuid') || errorMessage.includes('UUID')) {
-                      errorMessage = `Invalid UUID format for ${fieldName}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
-                    }
-
                     validationErrors.push({
                       row: rowNumber,
                       field: fieldName,
-                      message: errorMessage,
+                      message: issue.message || 'Invalid value',
                       data: rawRow as any,
                     })
                   })
                 } else {
-                  // Generic error
                   validationErrors.push({
                     row: rowNumber,
                     field: 'unknown',
@@ -534,34 +560,19 @@ export default function WorkStatsImport() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {errors.slice(0, 50).map((error, idx) => {
-                        // Clean up the error message if it's JSON
-                        let displayMessage = error.message
-                        if (typeof displayMessage === 'string' && displayMessage.startsWith('[')) {
-                          try {
-                            const parsed = JSON.parse(displayMessage)
-                            if (Array.isArray(parsed)) {
-                              displayMessage = parsed.map((e: any) => e.message || 'Invalid value').join(', ')
-                            }
-                          } catch {
-                            // Keep original if not valid JSON
-                          }
-                        }
-
-                        return (
-                          <TableRow key={idx}>
-                            <TableCell className="font-mono text-sm">{error.row}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="font-mono text-xs">
-                                {error.field || 'general'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground max-w-md">
-                              {displayMessage}
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })}
+                      {errors.slice(0, 50).map((error, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell className="font-mono text-sm">{error.row}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="font-mono text-xs">
+                              {error.field || 'general'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground max-w-md">
+                            {error.message}
+                          </TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 </ScrollArea>
@@ -672,16 +683,13 @@ export default function WorkStatsImport() {
             <h4 className="font-medium">Required Columns:</h4>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
               <li>
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">worker_id</code> - UUID of
-                the worker
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">worker_account_email</code> - Worker's PPH email (e.g., john.doe@pph.com)
               </li>
               <li>
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">project_id</code> - UUID of
-                the project
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">project_code</code> - Project code (e.g., VA-ENG-2024)
               </li>
               <li>
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">work_date</code> - Date in
-                YYYY-MM-DD format
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">work_date</code> - Date in YYYY-MM-DD format
               </li>
             </ul>
           </div>
@@ -690,20 +698,13 @@ export default function WorkStatsImport() {
             <h4 className="font-medium">Optional Columns:</h4>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
               <li>
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">worker_account_id</code> -
-                UUID of the worker account
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">units_completed</code> - Number of units completed
               </li>
               <li>
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">units_completed</code> -
-                Number of units completed
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">hours_worked</code> - Decimal hours worked (max 24)
               </li>
               <li>
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">hours_worked</code> - Decimal
-                hours worked (max 24)
-              </li>
-              <li>
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">earnings</code> - Decimal
-                earnings amount
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">earnings</code> - Decimal earnings amount
               </li>
             </ul>
           </div>
@@ -711,12 +712,21 @@ export default function WorkStatsImport() {
           <div className="space-y-2">
             <h4 className="font-medium">Validation Rules:</h4>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-              <li>Worker ID must exist in the database</li>
-              <li>Project ID must exist in the database</li>
-              <li>Worker account ID must exist if provided</li>
+              <li>Worker email must match an active worker account</li>
+              <li>Project code must exist in the database</li>
               <li>Work date cannot be in the future</li>
               <li>Hours worked must be between 0 and 24</li>
               <li>Duplicate entries (same worker, project, and date) are not allowed</li>
+            </ul>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="font-medium">Example Project Codes:</h4>
+            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+              <li><code className="text-xs bg-muted px-1 py-0.5 rounded">VA-ENG-2024</code> - Voice Assistant Training - English</li>
+              <li><code className="text-xs bg-muted px-1 py-0.5 rounded">MED-IMG-2024</code> - Medical Image Annotation</li>
+              <li><code className="text-xs bg-muted px-1 py-0.5 rounded">AUD-SPA-2024</code> - Spanish Audio Transcription</li>
+              <li><code className="text-xs bg-muted px-1 py-0.5 rounded">NLP-SENT-2024</code> - Sentiment Analysis Dataset</li>
             </ul>
           </div>
         </CardContent>

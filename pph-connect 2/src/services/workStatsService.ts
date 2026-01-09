@@ -1,55 +1,137 @@
 import { supabase } from '@/lib/supabase/client'
-import type { WorkStatRow, WorkStatValidationError } from '@/lib/schemas/workStats'
+import type {
+  WorkStatRow,
+  WorkStatCsvRow,
+  WorkStatValidationError,
+  WorkStatLookupResult
+} from '@/lib/schemas/workStats'
 
 /**
- * Check if a worker exists in the database
+ * Lookup worker and account by email
+ * Returns worker_id and worker_account_id if found
  */
-export async function validateWorkerExists(workerId: string): Promise<boolean> {
-  const { count, error } = await supabase
-    .from('workers')
-    .select('*', { count: 'exact', head: true })
-    .eq('id', workerId)
-
-  if (error) {
-    console.error('Error validating worker:', error)
-    return false
-  }
-
-  return (count || 0) > 0
-}
-
-/**
- * Check if a worker account exists in the database
- */
-export async function validateWorkerAccountExists(workerAccountId: string): Promise<boolean> {
-  const { count, error } = await supabase
+export async function lookupWorkerByEmail(
+  email: string
+): Promise<{ worker_id: string; worker_account_id: string } | null> {
+  const { data, error } = await supabase
     .from('worker_accounts')
-    .select('*', { count: 'exact', head: true })
-    .eq('id', workerAccountId)
+    .select(`
+      id,
+      worker_id,
+      worker_account_email
+    `)
+    .eq('worker_account_email', email)
+    .eq('status', 'active')
+    .eq('is_current', true)
+    .single()
 
-  if (error) {
-    console.error('Error validating worker account:', error)
-    return false
+  if (error || !data) {
+    // Try finding by worker's pph email if not found in accounts
+    const { data: workerData, error: workerError } = await supabase
+      .from('workers')
+      .select('id, email_pph')
+      .eq('email_pph', email)
+      .single()
+
+    if (workerError || !workerData) {
+      return null
+    }
+
+    // Find the current active account for this worker
+    const { data: accountData } = await supabase
+      .from('worker_accounts')
+      .select('id')
+      .eq('worker_id', workerData.id)
+      .eq('status', 'active')
+      .eq('is_current', true)
+      .single()
+
+    return {
+      worker_id: workerData.id,
+      worker_account_id: accountData?.id || '',
+    }
   }
 
-  return (count || 0) > 0
+  return {
+    worker_id: data.worker_id,
+    worker_account_id: data.id,
+  }
 }
 
 /**
- * Check if a project exists in the database
+ * Lookup project by project code
+ * Returns project_id if found
  */
-export async function validateProjectExists(projectId: string): Promise<boolean> {
-  const { count, error } = await supabase
-    .from('projects')
-    .select('*', { count: 'exact', head: true })
-    .eq('id', projectId)
+export async function lookupProjectByCode(projectCode: string): Promise<string | null> {
+  // First try workforce_projects table
+  const { data, error } = await supabase
+    .from('workforce_projects')
+    .select('id')
+    .eq('project_code', projectCode)
+    .single()
 
-  if (error) {
-    console.error('Error validating project:', error)
-    return false
+  if (!error && data) {
+    return data.id
   }
 
-  return (count || 0) > 0
+  // Also check projects table by name if code not found
+  const { data: projectData, error: projectError } = await supabase
+    .from('projects')
+    .select('id, name')
+    .ilike('name', `%${projectCode}%`)
+    .limit(1)
+    .single()
+
+  if (!projectError && projectData) {
+    return projectData.id
+  }
+
+  return null
+}
+
+/**
+ * Resolve CSV row data to database IDs
+ */
+export async function resolveWorkStatRow(
+  csvRow: WorkStatCsvRow,
+  rowIndex: number
+): Promise<{ result: WorkStatLookupResult | null; errors: WorkStatValidationError[] }> {
+  const errors: WorkStatValidationError[] = []
+
+  // Lookup worker by email
+  const workerLookup = await lookupWorkerByEmail(csvRow.worker_account_email)
+  if (!workerLookup) {
+    errors.push({
+      row: rowIndex,
+      field: 'worker_account_email',
+      message: `No active worker account found for email: ${csvRow.worker_account_email}`,
+      data: csvRow,
+    })
+  }
+
+  // Lookup project by code
+  const projectId = await lookupProjectByCode(csvRow.project_code)
+  if (!projectId) {
+    errors.push({
+      row: rowIndex,
+      field: 'project_code',
+      message: `Project not found with code: ${csvRow.project_code}`,
+      data: csvRow,
+    })
+  }
+
+  if (errors.length > 0 || !workerLookup || !projectId) {
+    return { result: null, errors }
+  }
+
+  return {
+    result: {
+      worker_id: workerLookup.worker_id,
+      worker_account_id: workerLookup.worker_account_id || null,
+      project_id: projectId,
+    },
+    errors: [],
+  }
 }
 
 /**
@@ -93,48 +175,14 @@ export function validateWorkDate(workDate: string): boolean {
 }
 
 /**
- * Perform business logic validation on a work stat row
+ * Perform business logic validation on a resolved work stat row
  */
 export async function validateWorkStatRow(
   row: WorkStatRow,
+  csvRow: WorkStatCsvRow,
   rowIndex: number
 ): Promise<WorkStatValidationError[]> {
   const errors: WorkStatValidationError[] = []
-
-  // Validate worker exists
-  const workerExists = await validateWorkerExists(row.worker_id)
-  if (!workerExists) {
-    errors.push({
-      row: rowIndex,
-      field: 'worker_id',
-      message: `Worker with ID ${row.worker_id} does not exist`,
-      data: row,
-    })
-  }
-
-  // Validate worker account exists (if provided)
-  if (row.worker_account_id) {
-    const accountExists = await validateWorkerAccountExists(row.worker_account_id)
-    if (!accountExists) {
-      errors.push({
-        row: rowIndex,
-        field: 'worker_account_id',
-        message: `Worker account with ID ${row.worker_account_id} does not exist`,
-        data: row,
-      })
-    }
-  }
-
-  // Validate project exists
-  const projectExists = await validateProjectExists(row.project_id)
-  if (!projectExists) {
-    errors.push({
-      row: rowIndex,
-      field: 'project_id',
-      message: `Project with ID ${row.project_id} does not exist`,
-      data: row,
-    })
-  }
 
   // Validate work date is not in the future
   if (!validateWorkDate(row.work_date)) {
@@ -142,7 +190,7 @@ export async function validateWorkStatRow(
       row: rowIndex,
       field: 'work_date',
       message: 'Work date cannot be in the future',
-      data: row,
+      data: csvRow,
     })
   }
 
@@ -158,7 +206,7 @@ export async function validateWorkStatRow(
       row: rowIndex,
       field: 'work_date',
       message: 'Duplicate entry: Work stat already exists for this worker, project, and date',
-      data: row,
+      data: csvRow,
     })
   }
 
@@ -183,36 +231,27 @@ export async function insertWorkStats(
 
     // Prepare data for insertion
     // created_by references profiles table (linked to auth.users)
-    const insertData = batch.map((row) => {
-      const baseData: any = {
-        worker_id: row.worker_id,
-        project_id: row.project_id,
-        work_date: row.work_date,
-        units_completed: row.units_completed || null,
-        hours_worked: row.hours_worked || null,
-        earnings: row.earnings || null,
-        created_by: createdBy,
-        created_at: new Date().toISOString(),
-      }
-
-      // Only include worker_account_id if it's provided
-      if (row.worker_account_id) {
-        baseData.worker_account_id = row.worker_account_id
-      }
-
-      return baseData
-    })
+    const insertData = batch.map((row) => ({
+      worker_id: row.worker_id,
+      worker_account_id: row.worker_account_id || null,
+      project_id: row.project_id,
+      work_date: row.work_date,
+      units_completed: row.units_completed || null,
+      hours_worked: row.hours_worked || null,
+      earnings: row.earnings || null,
+      created_by: createdBy,
+      created_at: new Date().toISOString(),
+    }))
 
     const { data, error } = await supabase.from('work_stats').insert(insertData).select()
 
     if (error) {
       console.error('Batch insert error:', error)
       errorCount += batch.length
-      batch.forEach((row, idx) => {
+      batch.forEach((_, idx) => {
         errors.push({
           row: i + idx + 2, // +2 for 1-based index and header row
           message: `Insert failed: ${error.message}`,
-          data: row,
         })
       })
     } else {
