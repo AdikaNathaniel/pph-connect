@@ -444,7 +444,50 @@ ON CONFLICT (client_locale_code) DO UPDATE SET
   locale_name = EXCLUDED.locale_name;
 
 -- ============================================================================
--- 14. VERIFICATION QUERIES
+-- 14. TRAINING MATERIALS
+-- ============================================================================
+-- Training resources (videos, documents, links) for each project
+-- Types: video, document, link
+INSERT INTO public.training_materials (id, project_id, title, description, type, url, created_at, created_by)
+VALUES
+  -- Voice Assistant Training - English (VA-ENG-2024) materials
+  ('01111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 'Voice Assistant Guidelines Overview', 'Introduction to voice assistant annotation guidelines and best practices', 'video', 'https://training.pph.com/videos/va-guidelines-overview', NOW(), 'b1111111-1111-1111-1111-111111111111'),
+  ('01111112-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 'Audio Quality Standards', 'Document outlining audio quality requirements and common issues', 'document', 'https://docs.pph.com/va-audio-quality-standards.pdf', NOW(), 'b1111111-1111-1111-1111-111111111111'),
+  ('01111113-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 'Transcription Style Guide', 'Official style guide for voice transcription tasks', 'document', 'https://docs.pph.com/va-transcription-style-guide.pdf', NOW(), 'b1111111-1111-1111-1111-111111111111'),
+  ('01111114-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 'FAQ and Common Questions', 'Link to frequently asked questions knowledge base', 'link', 'https://kb.pph.com/va-eng-faq', NOW(), 'b1111111-1111-1111-1111-111111111111'),
+
+  -- Medical Image Annotation (MED-IMG-2024) materials
+  ('02222221-2222-2222-2222-222222222222', 'd2222222-2222-2222-2222-222222222222', 'Medical Imaging Basics', 'Introduction to medical image types and annotation requirements', 'video', 'https://training.pph.com/videos/med-imaging-basics', NOW(), 'b6666666-6666-6666-6666-666666666666'),
+  ('02222222-2222-2222-2222-222222222222', 'd2222222-2222-2222-2222-222222222222', 'Anatomy Reference Guide', 'Comprehensive anatomy reference for accurate annotations', 'document', 'https://docs.pph.com/med-anatomy-reference.pdf', NOW(), 'b6666666-6666-6666-6666-666666666666'),
+  ('02222223-2222-2222-2222-222222222222', 'd2222222-2222-2222-2222-222222222222', 'HIPAA Compliance Training', 'Required training on patient data privacy and HIPAA compliance', 'video', 'https://training.pph.com/videos/hipaa-compliance', NOW(), 'b6666666-6666-6666-6666-666666666666'),
+  ('02222224-2222-2222-2222-222222222222', 'd2222222-2222-2222-2222-222222222222', 'Annotation Tool Tutorial', 'Step-by-step guide to using the medical annotation tool', 'video', 'https://training.pph.com/videos/med-annotation-tool', NOW(), 'b6666666-6666-6666-6666-666666666666'),
+
+  -- Spanish Audio Transcription (AUD-SPA-2024) materials
+  ('03333331-3333-3333-3333-333333333333', 'd3333333-3333-3333-3333-333333333333', 'Spanish Dialect Guide', 'Overview of Spanish dialects and regional variations', 'document', 'https://docs.pph.com/spa-dialect-guide.pdf', NOW(), 'b3333333-3333-3333-3333-333333333333'),
+  ('03333332-3333-3333-3333-333333333333', 'd3333333-3333-3333-3333-333333333333', 'Audio Transcription Best Practices', 'Video tutorial on Spanish audio transcription techniques', 'video', 'https://training.pph.com/videos/spa-transcription-best-practices', NOW(), 'b3333333-3333-3333-3333-333333333333'),
+  ('03333333-3333-3333-3333-333333333333', 'd3333333-3333-3333-3333-333333333333', 'Punctuation and Formatting Rules', 'Spanish-specific punctuation and formatting guidelines', 'document', 'https://docs.pph.com/spa-punctuation-rules.pdf', NOW(), 'b3333333-3333-3333-3333-333333333333'),
+
+  -- Sentiment Analysis Dataset (NLP-SENT-2024) materials
+  ('04444441-4444-4444-4444-444444444444', 'd4444444-4444-4444-4444-444444444444', 'Sentiment Analysis Introduction', 'Overview of sentiment classification and labeling', 'video', 'https://training.pph.com/videos/sentiment-intro', NOW(), 'b4444444-4444-4444-4444-444444444444'),
+  ('04444442-4444-4444-4444-444444444444', 'd4444444-4444-4444-4444-444444444444', 'Labeling Guidelines', 'Detailed guidelines for positive, negative, and neutral sentiment labels', 'document', 'https://docs.pph.com/sentiment-labeling-guide.pdf', NOW(), 'b4444444-4444-4444-4444-444444444444'),
+  ('04444443-4444-4444-4444-444444444444', 'd4444444-4444-4444-4444-444444444444', 'Edge Cases and Examples', 'Examples of tricky sentiment cases and how to handle them', 'document', 'https://docs.pph.com/sentiment-edge-cases.pdf', NOW(), 'b4444444-4444-4444-4444-444444444444'),
+
+  -- Autonomous Driving Labels (CV-AUTO-2024) materials
+  ('05555551-5555-5555-5555-555555555555', 'd5555555-5555-5555-5555-555555555555', 'Object Detection Basics', 'Introduction to object detection and bounding box annotations', 'video', 'https://training.pph.com/videos/object-detection-basics', NOW(), 'b6666666-6666-6666-6666-666666666666'),
+  ('05555552-5555-5555-5555-555555555555', 'd5555555-5555-5555-5555-555555555555', 'Vehicle and Pedestrian Classification', 'Guide to classifying vehicles, pedestrians, and other road objects', 'document', 'https://docs.pph.com/auto-classification-guide.pdf', NOW(), 'b6666666-6666-6666-6666-666666666666'),
+  ('05555553-5555-5555-5555-555555555555', 'd5555555-5555-5555-5555-555555555555', 'Annotation Tool Quick Start', 'Quick start guide for the autonomous driving annotation platform', 'link', 'https://kb.pph.com/auto-tool-quickstart', NOW(), 'b6666666-6666-6666-6666-666666666666'),
+
+  -- Chatbot Training Data (NLP-CHAT-2023) materials - completed project
+  ('06666661-6666-6666-6666-666666666666', 'd6666666-6666-6666-6666-666666666666', 'Chatbot Intent Classification', 'Training on how to classify user intents for chatbot training', 'video', 'https://training.pph.com/videos/chatbot-intent-classification', NOW(), 'b4444444-4444-4444-4444-444444444444'),
+  ('06666662-6666-6666-6666-666666666666', 'd6666666-6666-6666-6666-666666666666', 'Response Quality Guidelines', 'Guidelines for evaluating and rating chatbot responses', 'document', 'https://docs.pph.com/chatbot-response-quality.pdf', NOW(), 'b4444444-4444-4444-4444-444444444444')
+ON CONFLICT (id) DO UPDATE SET
+  title = EXCLUDED.title,
+  description = EXCLUDED.description,
+  type = EXCLUDED.type,
+  url = EXCLUDED.url;
+
+-- ============================================================================
+-- 15. VERIFICATION QUERIES
 -- ============================================================================
 -- Display summary of seeded data
 DO $$
@@ -460,6 +503,7 @@ DECLARE
   stats_count INT;
   rates_count INT;
   locale_count INT;
+  training_count INT;
 BEGIN
   SELECT COUNT(*) INTO dept_count FROM public.departments;
   SELECT COUNT(*) INTO profile_count FROM public.profiles;
@@ -472,6 +516,7 @@ BEGIN
   SELECT COUNT(*) INTO stats_count FROM public.work_stats;
   SELECT COUNT(*) INTO rates_count FROM public.rates_payable;
   SELECT COUNT(*) INTO locale_count FROM public.locale_mappings;
+  SELECT COUNT(*) INTO training_count FROM public.training_materials;
 
   RAISE NOTICE '============================================================================';
   RAISE NOTICE 'SEED DATA SUMMARY';
@@ -487,6 +532,7 @@ BEGIN
   RAISE NOTICE 'Work Stats:            % records', stats_count;
   RAISE NOTICE 'Rates Payable:         % records', rates_count;
   RAISE NOTICE 'Locale Mappings:       % records', locale_count;
+  RAISE NOTICE 'Training Materials:    % records', training_count;
   RAISE NOTICE '============================================================================';
 END $$;
 
