@@ -3,22 +3,34 @@ import type {
   WorkStatRow,
   WorkStatCsvRow,
   WorkStatValidationError,
-  WorkStatLookupResult
+  WorkStatLookupResult,
+  RateLookupResult,
+  LocaleMappingResult
 } from '@/lib/schemas/workStats'
 
 /**
  * Lookup worker and account by email
- * Returns worker_id and worker_account_id if found
+ * Returns worker_id, worker_account_id, and worker details for rate calculation
  */
 export async function lookupWorkerByEmail(
   email: string
-): Promise<{ worker_id: string; worker_account_id: string } | null> {
+): Promise<{
+  worker_id: string
+  worker_account_id: string
+  locale_primary: string
+  country_residence: string
+} | null> {
   const { data, error } = await supabase
     .from('worker_accounts')
     .select(`
       id,
       worker_id,
-      worker_account_email
+      worker_account_email,
+      workers:worker_id (
+        id,
+        locale_primary,
+        country_residence
+      )
     `)
     .eq('worker_account_email', email)
     .eq('status', 'active')
@@ -29,7 +41,7 @@ export async function lookupWorkerByEmail(
     // Try finding by worker's pph email if not found in accounts
     const { data: workerData, error: workerError } = await supabase
       .from('workers')
-      .select('id, email_pph')
+      .select('id, email_pph, locale_primary, country_residence')
       .eq('email_pph', email)
       .single()
 
@@ -49,29 +61,41 @@ export async function lookupWorkerByEmail(
     return {
       worker_id: workerData.id,
       worker_account_id: accountData?.id || '',
+      locale_primary: workerData.locale_primary,
+      country_residence: workerData.country_residence,
     }
+  }
+
+  const workerInfo = data.workers as unknown as {
+    id: string
+    locale_primary: string
+    country_residence: string
   }
 
   return {
     worker_id: data.worker_id,
     worker_account_id: data.id,
+    locale_primary: workerInfo?.locale_primary || '',
+    country_residence: workerInfo?.country_residence || '',
   }
 }
 
 /**
  * Lookup project by project code
- * Returns project_id if found
+ * Returns project_id and expert_tier if found
  */
-export async function lookupProjectByCode(projectCode: string): Promise<string | null> {
+export async function lookupProjectByCode(
+  projectCode: string
+): Promise<{ id: string; expert_tier: string } | null> {
   // First try workforce_projects table
   const { data, error } = await supabase
     .from('workforce_projects')
-    .select('id')
+    .select('id, expert_tier')
     .eq('project_code', projectCode)
     .single()
 
   if (!error && data) {
-    return data.id
+    return { id: data.id, expert_tier: data.expert_tier }
   }
 
   // Also check projects table by name if code not found
@@ -83,19 +107,127 @@ export async function lookupProjectByCode(projectCode: string): Promise<string |
     .single()
 
   if (!projectError && projectData) {
-    return projectData.id
+    // Default expert tier for projects not in workforce_projects
+    return { id: projectData.id, expert_tier: 'standard' }
   }
 
   return null
 }
 
 /**
+ * Map client locale code to standard ISO code
+ * Returns null if no mapping found (will use the code as-is)
+ */
+export async function lookupLocaleMapping(
+  clientLocaleCode: string
+): Promise<LocaleMappingResult | null> {
+  const { data, error } = await supabase
+    .from('locale_mappings')
+    .select('standard_iso_code, locale_name')
+    .eq('client_locale_code', clientLocaleCode)
+    .single()
+
+  if (error || !data) {
+    return null
+  }
+
+  return {
+    standard_iso_code: data.standard_iso_code,
+    locale_name: data.locale_name,
+  }
+}
+
+/**
+ * Lookup applicable rate for a worker based on locale, country, and expert tier
+ * Uses work_date to find effective rate
+ */
+export async function lookupRate(
+  locale: string,
+  country: string,
+  expertTier: string,
+  workDate: string
+): Promise<RateLookupResult | null> {
+  // Try to find exact match first
+  let query = supabase
+    .from('rates_payable')
+    .select('rate_per_unit, rate_per_hour, currency')
+    .eq('locale', locale)
+    .eq('country', country)
+    .eq('expert_tier', expertTier)
+    .lte('effective_from', workDate)
+    .or(`effective_to.is.null,effective_to.gte.${workDate}`)
+    .order('effective_from', { ascending: false })
+    .limit(1)
+
+  const { data, error } = await query
+
+  if (!error && data && data.length > 0) {
+    return {
+      rate_per_unit: data[0].rate_per_unit,
+      rate_per_hour: data[0].rate_per_hour,
+      currency: data[0].currency,
+    }
+  }
+
+  // Fallback: Try without country specificity (just locale + tier)
+  const { data: localeData, error: localeError } = await supabase
+    .from('rates_payable')
+    .select('rate_per_unit, rate_per_hour, currency')
+    .eq('locale', locale)
+    .eq('expert_tier', expertTier)
+    .lte('effective_from', workDate)
+    .or(`effective_to.is.null,effective_to.gte.${workDate}`)
+    .order('effective_from', { ascending: false })
+    .limit(1)
+
+  if (!localeError && localeData && localeData.length > 0) {
+    return {
+      rate_per_unit: localeData[0].rate_per_unit,
+      rate_per_hour: localeData[0].rate_per_hour,
+      currency: localeData[0].currency,
+    }
+  }
+
+  return null
+}
+
+/**
+ * Calculate earnings based on units/hours and applicable rates
+ */
+export function calculateEarnings(
+  unitsCompleted: number | null | undefined,
+  hoursWorked: number | null | undefined,
+  rate: RateLookupResult | null
+): number | null {
+  if (!rate) return null
+
+  let earnings = 0
+
+  // Calculate based on units if available
+  if (unitsCompleted && rate.rate_per_unit) {
+    earnings += unitsCompleted * rate.rate_per_unit
+  }
+
+  // Calculate based on hours if available and no unit rate was applied
+  if (hoursWorked && rate.rate_per_hour && !rate.rate_per_unit) {
+    earnings += hoursWorked * rate.rate_per_hour
+  }
+
+  return earnings > 0 ? Number(earnings.toFixed(2)) : null
+}
+
+/**
  * Resolve CSV row data to database IDs
+ * Also handles locale mapping if locale_code is provided
  */
 export async function resolveWorkStatRow(
   csvRow: WorkStatCsvRow,
   rowIndex: number
-): Promise<{ result: WorkStatLookupResult | null; errors: WorkStatValidationError[] }> {
+): Promise<{
+  result: WorkStatLookupResult | null
+  errors: WorkStatValidationError[]
+  resolvedLocale?: string
+}> {
   const errors: WorkStatValidationError[] = []
 
   // Lookup worker by email
@@ -110,8 +242,8 @@ export async function resolveWorkStatRow(
   }
 
   // Lookup project by code
-  const projectId = await lookupProjectByCode(csvRow.project_code)
-  if (!projectId) {
+  const projectLookup = await lookupProjectByCode(csvRow.project_code)
+  if (!projectLookup) {
     errors.push({
       row: rowIndex,
       field: 'project_code',
@@ -120,7 +252,19 @@ export async function resolveWorkStatRow(
     })
   }
 
-  if (errors.length > 0 || !workerLookup || !projectId) {
+  // Handle locale mapping if locale_code is provided
+  let resolvedLocale = workerLookup?.locale_primary || ''
+  if (csvRow.locale_code) {
+    const localeMapping = await lookupLocaleMapping(csvRow.locale_code)
+    if (localeMapping) {
+      resolvedLocale = localeMapping.standard_iso_code
+    } else {
+      // Use the provided locale_code directly if no mapping found
+      resolvedLocale = csvRow.locale_code
+    }
+  }
+
+  if (errors.length > 0 || !workerLookup || !projectLookup) {
     return { result: null, errors }
   }
 
@@ -128,9 +272,13 @@ export async function resolveWorkStatRow(
     result: {
       worker_id: workerLookup.worker_id,
       worker_account_id: workerLookup.worker_account_id || null,
-      project_id: projectId,
+      project_id: projectLookup.id,
+      worker_locale: resolvedLocale,
+      worker_country: workerLookup.country_residence,
+      project_expert_tier: projectLookup.expert_tier,
     },
     errors: [],
+    resolvedLocale,
   }
 }
 

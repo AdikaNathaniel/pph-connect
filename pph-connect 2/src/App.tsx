@@ -19,6 +19,7 @@ import { DepartmentCreate } from '@/pages/departments/DepartmentCreate'
 import { DepartmentEdit } from '@/pages/departments/DepartmentEdit'
 import WorkStatsImport from '@/pages/stats/WorkStatsImport'
 import { StatsPage } from '@/pages/stats/StatsPage'
+import RateCardsPage from '@/pages/rates/RateCardsPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AppLayout } from '@/components/layout/AppLayout'
 
@@ -204,6 +205,16 @@ function App() {
           <ProtectedRoute>
             <AppLayout pageTitle="Work Stats Import">
               <WorkStatsImport />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/rates"
+        element={
+          <ProtectedRoute>
+            <AppLayout pageTitle="Rate Cards">
+              <RateCardsPage />
             </AppLayout>
           </ProtectedRoute>
         }

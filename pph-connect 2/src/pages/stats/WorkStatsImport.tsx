@@ -42,6 +42,8 @@ import {
   resolveWorkStatRow,
   validateWorkStatRow,
   insertWorkStats,
+  lookupRate,
+  calculateEarnings,
 } from '@/services/workStatsService'
 
 const REQUIRED_COLUMNS = [
@@ -51,6 +53,7 @@ const REQUIRED_COLUMNS = [
 ]
 
 const OPTIONAL_COLUMNS = [
+  'locale_code',
   'units_completed',
   'hours_worked',
   'earnings',
@@ -96,14 +99,15 @@ export default function WorkStatsImport() {
     date3.setDate(date3.getDate() - randomOffset - 2)
 
     // Uses real emails and project codes from seed data with dynamic dates
+    // Format: worker_account_email,project_code,work_date,locale_code,units_completed,hours_worked,earnings
     const template = [
       allColumns.join(','),
-      // Example 1: John Doe working on Voice Assistant Training
-      `john.doe@pph.com,VA-ENG-2024,${formatDate(date1)},150,8,200.00`,
-      // Example 2: Jane Smith working on Voice Assistant Training
-      `jane.smith@pph.com,VA-ENG-2024,${formatDate(date2)},180,8,200.00`,
-      // Example 3: Carlos Garcia working on Spanish Audio Transcription
-      `carlos.garcia@pph.com,AUD-SPA-2024,${formatDate(date3)},100,6,150.00`,
+      // Example 1: John Doe - with explicit earnings
+      `john.doe@pph.com,VA-ENG-2024,${formatDate(date1)},en-US,150,8,200.00`,
+      // Example 2: Jane Smith - earnings will be auto-calculated (empty earnings field)
+      `jane.smith@pph.com,VA-ENG-2024,${formatDate(date2)},en-GB,180,8,`,
+      // Example 3: Carlos Garcia - with locale that may need mapping
+      `carlos.garcia@pph.com,AUD-SPA-2024,${formatDate(date3)},es-MX,100,6,150.00`,
     ].join('\n')
 
     const blob = new Blob([template], { type: 'text/csv' })
@@ -230,17 +234,18 @@ export default function WorkStatsImport() {
               const rowNumber = i + 2 // +2 for 1-based index and header row
 
               try {
-                // Schema validation for CSV row
+                // Schema validation for CSV row (includes locale_code)
                 const csvRow: WorkStatCsvRow = workStatCsvRowSchema.parse({
                   worker_account_email: rawRow.worker_account_email?.trim(),
                   project_code: rawRow.project_code?.trim(),
                   work_date: rawRow.work_date?.trim(),
+                  locale_code: rawRow.locale_code?.trim() || null,
                   units_completed: rawRow.units_completed?.trim() || null,
                   hours_worked: rawRow.hours_worked?.trim() || null,
                   earnings: rawRow.earnings?.trim() || null,
                 })
 
-                // Resolve email/code to IDs
+                // Resolve email/code to IDs (also handles locale mapping)
                 const { result: lookupResult, errors: lookupErrors } = await resolveWorkStatRow(csvRow, rowNumber)
 
                 if (lookupErrors.length > 0) {
@@ -252,6 +257,25 @@ export default function WorkStatsImport() {
                   continue
                 }
 
+                // Determine earnings - use provided value or auto-calculate from rates
+                let finalEarnings = csvRow.earnings
+                if (!finalEarnings && (csvRow.units_completed || csvRow.hours_worked)) {
+                  // Auto-calculate earnings from rates_payable
+                  const rate = await lookupRate(
+                    lookupResult.worker_locale,
+                    lookupResult.worker_country,
+                    lookupResult.project_expert_tier,
+                    csvRow.work_date
+                  )
+                  if (rate) {
+                    finalEarnings = calculateEarnings(
+                      csvRow.units_completed,
+                      csvRow.hours_worked,
+                      rate
+                    )
+                  }
+                }
+
                 // Create resolved row with IDs
                 const resolvedRow: WorkStatRow = {
                   worker_id: lookupResult.worker_id,
@@ -260,7 +284,7 @@ export default function WorkStatsImport() {
                   work_date: csvRow.work_date,
                   units_completed: csvRow.units_completed,
                   hours_worked: csvRow.hours_worked,
-                  earnings: csvRow.earnings,
+                  earnings: finalEarnings,
                 }
 
                 // Business logic validation
@@ -698,14 +722,26 @@ export default function WorkStatsImport() {
             <h4 className="font-medium">Optional Columns:</h4>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
               <li>
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">locale_code</code> - Client locale code (will be mapped to ISO standard)
+              </li>
+              <li>
                 <code className="text-xs bg-muted px-1 py-0.5 rounded">units_completed</code> - Number of units completed
               </li>
               <li>
                 <code className="text-xs bg-muted px-1 py-0.5 rounded">hours_worked</code> - Decimal hours worked (max 24)
               </li>
               <li>
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">earnings</code> - Decimal earnings amount
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">earnings</code> - Decimal earnings amount (auto-calculated if not provided)
               </li>
+            </ul>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="font-medium">Auto-Calculation Features:</h4>
+            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+              <li><strong>Locale Mapping:</strong> Client locale codes are automatically mapped to ISO standard codes</li>
+              <li><strong>Earnings Calculation:</strong> If earnings is not provided, it will be auto-calculated using the rates_payable table based on worker locale, country, project tier, and work date</li>
+              <li>Rate lookup uses: worker's locale + country + project expert tier + effective date</li>
             </ul>
           </div>
 

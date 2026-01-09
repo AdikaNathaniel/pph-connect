@@ -77,14 +77,16 @@ const flexibleDateSchema = z.string().transform((val, ctx) => {
  * - worker_account_email: Email of the worker account (e.g., john.doe@pph.com)
  * - project_code: Project code (e.g., VA-ENG-2024)
  * - work_date: Date in YYYY-MM-DD or DD/MM/YYYY format (will be normalized to YYYY-MM-DD)
+ * - locale_code: Client locale code (optional - will be mapped to ISO standard code)
  * - units_completed: Number of units completed (optional)
  * - hours_worked: Decimal number of hours (optional)
- * - earnings: Decimal earnings amount (optional)
+ * - earnings: Decimal earnings amount (optional - will be auto-calculated from rates if not provided)
  */
 export const workStatCsvRowSchema = z.object({
   worker_account_email: z.string().email('Invalid email format'),
   project_code: z.string().min(1, 'Project code is required'),
   work_date: flexibleDateSchema,
+  locale_code: z.string().optional().nullable(),
   units_completed: z.coerce.number().int().positive('Units must be greater than 0').optional().nullable(),
   hours_worked: z.coerce.number().positive('Hours must be greater than 0').max(24, 'Hours cannot exceed 24').optional().nullable(),
   earnings: z.coerce.number().nonnegative('Earnings must be non-negative').optional().nullable(),
@@ -149,4 +151,25 @@ export interface WorkStatLookupResult {
   worker_id: string
   worker_account_id: string | null
   project_id: string
+  // Additional data for rate calculation
+  worker_locale: string
+  worker_country: string
+  project_expert_tier: string
+}
+
+/**
+ * Rate lookup result
+ */
+export interface RateLookupResult {
+  rate_per_unit: number | null
+  rate_per_hour: number | null
+  currency: string
+}
+
+/**
+ * Locale mapping result
+ */
+export interface LocaleMappingResult {
+  standard_iso_code: string
+  locale_name: string
 }
