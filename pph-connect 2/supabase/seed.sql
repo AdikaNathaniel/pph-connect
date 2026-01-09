@@ -487,7 +487,53 @@ ON CONFLICT (id) DO UPDATE SET
   url = EXCLUDED.url;
 
 -- ============================================================================
--- 15. VERIFICATION QUERIES
+-- 15. TRAINING GATES
+-- ============================================================================
+-- Track worker progress through training gates/checkpoints on projects
+-- Status values: passed, failed, pending
+-- Note: References projects table (d1111111-d4444444), not workforce_projects
+INSERT INTO public.training_gates (id, worker_id, project_id, gate_name, status, score, attempt_count, passed_at, created_at, updated_at)
+VALUES
+  -- John Doe (b1111111) - Voice Assistant Training (d1111111) - All gates passed
+  -- NOTE: UUIDs use hex characters only (0-9, a-f). Using 'a' prefix for training_gates IDs.
+  ('a1111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 'onboarding', 'passed', 95.5, 1, NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days'),
+  ('a1111112-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 'certification', 'passed', 88.0, 2, NOW() - INTERVAL '25 days', NOW() - INTERVAL '28 days', NOW() - INTERVAL '25 days'),
+  ('a1111113-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 'advanced', 'passed', 92.0, 1, NOW() - INTERVAL '10 days', NOW() - INTERVAL '15 days', NOW() - INTERVAL '10 days'),
+
+  -- Jane Smith (b2222222) - Voice Assistant Training (d1111111) - Partially complete
+  ('a2222221-2222-2222-2222-222222222222', 'b2222222-2222-2222-2222-222222222222', 'd1111111-1111-1111-1111-111111111111', 'onboarding', 'passed', 98.0, 1, NOW() - INTERVAL '20 days', NOW() - INTERVAL '20 days', NOW() - INTERVAL '20 days'),
+  ('a2222222-2222-2222-2222-222222222222', 'b2222222-2222-2222-2222-222222222222', 'd1111111-1111-1111-1111-111111111111', 'certification', 'passed', 91.5, 1, NOW() - INTERVAL '15 days', NOW() - INTERVAL '16 days', NOW() - INTERVAL '15 days'),
+  ('a2222223-2222-2222-2222-222222222222', 'b2222222-2222-2222-2222-222222222222', 'd1111111-1111-1111-1111-111111111111', 'advanced', 'pending', 0, 0, NULL, NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'),
+
+  -- Carlos Garcia (b3333333) - Spanish Audio Transcription (d3333333) - All gates passed
+  ('a3333331-3333-3333-3333-333333333333', 'b3333333-3333-3333-3333-333333333333', 'd3333333-3333-3333-3333-333333333333', 'onboarding', 'passed', 100.0, 1, NOW() - INTERVAL '45 days', NOW() - INTERVAL '45 days', NOW() - INTERVAL '45 days'),
+  ('a3333332-3333-3333-3333-333333333333', 'b3333333-3333-3333-3333-333333333333', 'd3333333-3333-3333-3333-333333333333', 'certification', 'passed', 85.0, 3, NOW() - INTERVAL '35 days', NOW() - INTERVAL '42 days', NOW() - INTERVAL '35 days'),
+
+  -- Priya Patel (b4444444) - Sentiment Analysis (d4444444) - In progress
+  ('a4444441-4444-4444-4444-444444444444', 'b4444444-4444-4444-4444-444444444444', 'd4444444-4444-4444-4444-444444444444', 'onboarding', 'passed', 90.0, 1, NOW() - INTERVAL '14 days', NOW() - INTERVAL '14 days', NOW() - INTERVAL '14 days'),
+  ('a4444442-4444-4444-4444-444444444444', 'b4444444-4444-4444-4444-444444444444', 'd4444444-4444-4444-4444-444444444444', 'certification', 'failed', 65.0, 2, NULL, NOW() - INTERVAL '10 days', NOW() - INTERVAL '5 days'),
+
+  -- Li Wei (b6666666) - Medical Image Annotation (d2222222) - Expert level
+  ('a6666661-6666-6666-6666-666666666666', 'b6666666-6666-6666-6666-666666666666', 'd2222222-2222-2222-2222-222222222222', 'onboarding', 'passed', 100.0, 1, NOW() - INTERVAL '60 days', NOW() - INTERVAL '60 days', NOW() - INTERVAL '60 days'),
+  ('a6666662-6666-6666-6666-666666666666', 'b6666666-6666-6666-6666-666666666666', 'd2222222-2222-2222-2222-222222222222', 'certification', 'passed', 97.0, 1, NOW() - INTERVAL '55 days', NOW() - INTERVAL '56 days', NOW() - INTERVAL '55 days'),
+  ('a6666663-6666-6666-6666-666666666666', 'b6666666-6666-6666-6666-666666666666', 'd2222222-2222-2222-2222-222222222222', 'advanced', 'passed', 94.0, 1, NOW() - INTERVAL '40 days', NOW() - INTERVAL '45 days', NOW() - INTERVAL '40 days'),
+  ('a6666664-6666-6666-6666-666666666666', 'b6666666-6666-6666-6666-666666666666', 'd2222222-2222-2222-2222-222222222222', 'expert', 'passed', 91.0, 2, NOW() - INTERVAL '20 days', NOW() - INTERVAL '30 days', NOW() - INTERVAL '20 days'),
+
+  -- Sophie Mueller (b7777777) - Medical Image Annotation (d2222222) - Starting
+  ('a7777771-7777-7777-7777-777777777777', 'b7777777-7777-7777-7777-777777777777', 'd2222222-2222-2222-2222-222222222222', 'onboarding', 'passed', 88.0, 1, NOW() - INTERVAL '7 days', NOW() - INTERVAL '7 days', NOW() - INTERVAL '7 days'),
+  ('a7777772-7777-7777-7777-777777777777', 'b7777777-7777-7777-7777-777777777777', 'd2222222-2222-2222-2222-222222222222', 'certification', 'pending', 0, 0, NULL, NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+
+  -- Yuki Tanaka (b9999999) - Medical Image Annotation (d2222222) - Recently joined
+  ('a9999991-9999-9999-9999-999999999999', 'b9999999-9999-9999-9999-999999999999', 'd2222222-2222-2222-2222-222222222222', 'onboarding', 'pending', 0, 0, NULL, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days')
+ON CONFLICT (worker_id, project_id, gate_name) DO UPDATE SET
+  status = EXCLUDED.status,
+  score = EXCLUDED.score,
+  attempt_count = EXCLUDED.attempt_count,
+  passed_at = EXCLUDED.passed_at,
+  updated_at = NOW();
+
+-- ============================================================================
+-- 16. VERIFICATION QUERIES
 -- ============================================================================
 -- Display summary of seeded data
 DO $$
@@ -503,7 +549,8 @@ DECLARE
   stats_count INT;
   rates_count INT;
   locale_count INT;
-  training_count INT;
+  training_mat_count INT;
+  training_gate_count INT;
 BEGIN
   SELECT COUNT(*) INTO dept_count FROM public.departments;
   SELECT COUNT(*) INTO profile_count FROM public.profiles;
@@ -516,7 +563,8 @@ BEGIN
   SELECT COUNT(*) INTO stats_count FROM public.work_stats;
   SELECT COUNT(*) INTO rates_count FROM public.rates_payable;
   SELECT COUNT(*) INTO locale_count FROM public.locale_mappings;
-  SELECT COUNT(*) INTO training_count FROM public.training_materials;
+  SELECT COUNT(*) INTO training_mat_count FROM public.training_materials;
+  SELECT COUNT(*) INTO training_gate_count FROM public.training_gates;
 
   RAISE NOTICE '============================================================================';
   RAISE NOTICE 'SEED DATA SUMMARY';
@@ -532,7 +580,8 @@ BEGIN
   RAISE NOTICE 'Work Stats:            % records', stats_count;
   RAISE NOTICE 'Rates Payable:         % records', rates_count;
   RAISE NOTICE 'Locale Mappings:       % records', locale_count;
-  RAISE NOTICE 'Training Materials:    % records', training_count;
+  RAISE NOTICE 'Training Materials:    % records', training_mat_count;
+  RAISE NOTICE 'Training Gates:        % records', training_gate_count;
   RAISE NOTICE '============================================================================';
 END $$;
 
