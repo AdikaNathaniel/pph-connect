@@ -20,6 +20,7 @@ import { DepartmentEdit } from '@/pages/departments/DepartmentEdit'
 import WorkStatsImport from '@/pages/stats/WorkStatsImport'
 import { StatsPage } from '@/pages/stats/StatsPage'
 import RateCardsPage from '@/pages/rates/RateCardsPage'
+import { UserManagement } from '@/pages/users/UserManagement'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AppLayout } from '@/components/layout/AppLayout'
 
@@ -215,6 +216,16 @@ function App() {
           <ProtectedRoute>
             <AppLayout pageTitle="Rate Cards">
               <RateCardsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <ProtectedRoute>
+            <AppLayout pageTitle="User Management">
+              <UserManagement />
             </AppLayout>
           </ProtectedRoute>
         }

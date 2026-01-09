@@ -16,6 +16,7 @@ import {
   CirclePlus,
   BarChart3,
   CreditCard,
+  ShieldCheck,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -69,6 +70,7 @@ export function AppLayout({ children, pageTitle }: AppLayoutProps) {
           { title: 'Departments', href: '/departments', icon: Building2 },
           { title: 'Stats', href: '/stats', icon: BarChart3 },
           { title: 'Rate Cards', href: '/rates', icon: CreditCard },
+          { title: 'User Management', href: '/users', icon: ShieldCheck },
           { title: 'Messages', href: '/messages', icon: Mail },
         ],
       },
