@@ -106,7 +106,12 @@ type RateFormData = {
   effective_to: string
 }
 
-const EXPERT_TIERS = ['standard', 'advanced', 'expert', 'master']
+const EXPERT_TIERS = ['tier0', 'tier1', 'tier2']
+const TIER_LABELS: Record<string, string> = {
+  tier0: 'Tier 0 (Entry)',
+  tier1: 'Tier 1 (Intermediate)',
+  tier2: 'Tier 2 (Expert)',
+}
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'PHP', 'INR', 'MXN']
 
 export default function RateCardsPage() {
@@ -122,7 +127,7 @@ export default function RateCardsPage() {
   const [selectedRate, setSelectedRate] = useState<RatePayable | null>(null)
   const [formData, setFormData] = useState<RateFormData>({
     locale: '',
-    expert_tier: 'standard',
+    expert_tier: 'tier0',
     country: '',
     rate_per_unit: '',
     rate_per_hour: '',
@@ -170,7 +175,7 @@ export default function RateCardsPage() {
   // Add rate mutation
   const addMutation = useMutation({
     mutationFn: async (data: RateFormData) => {
-      const { error } = await supabase.from('rates_payable').insert({
+      const { data: insertedData, error } = await supabase.from('rates_payable').insert({
         locale: data.locale,
         expert_tier: data.expert_tier,
         country: data.country,
@@ -179,10 +184,17 @@ export default function RateCardsPage() {
         currency: data.currency,
         effective_from: data.effective_from,
         effective_to: data.effective_to || null,
-        created_by: user?.id || null,
-      })
+        created_by: null, // Set to null - auth user ID doesn't match workers table
+      }).select()
 
       if (error) throw error
+
+      // Check if the insert actually succeeded
+      if (!insertedData || insertedData.length === 0) {
+        throw new Error('Insert failed: No rows were created. You may not have permission to add rates.')
+      }
+
+      return insertedData[0]
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rates-payable'] })
@@ -289,7 +301,7 @@ export default function RateCardsPage() {
   const resetForm = () => {
     setFormData({
       locale: '',
-      expert_tier: 'standard',
+      expert_tier: 'tier0',
       country: '',
       rate_per_unit: '',
       rate_per_hour: '',
@@ -365,14 +377,18 @@ export default function RateCardsPage() {
         cell: ({ row }) => {
           const tier = row.original.expert_tier
           const tierColors: Record<string, string> = {
-            standard: 'bg-slate-100 text-slate-800',
-            advanced: 'bg-blue-100 text-blue-800',
-            expert: 'bg-purple-100 text-purple-800',
-            master: 'bg-amber-100 text-amber-800',
+            tier0: 'bg-slate-100 text-slate-800',
+            tier1: 'bg-blue-100 text-blue-800',
+            tier2: 'bg-purple-100 text-purple-800',
+          }
+          const tierLabels: Record<string, string> = {
+            tier0: 'Tier 0',
+            tier1: 'Tier 1',
+            tier2: 'Tier 2',
           }
           return (
             <Badge variant="secondary" className={`whitespace-nowrap ${tierColors[tier] || ''}`}>
-              {tier}
+              {tierLabels[tier] || tier}
             </Badge>
           )
         },
@@ -695,7 +711,7 @@ export default function RateCardsPage() {
                 <SelectContent>
                   {EXPERT_TIERS.map((tier) => (
                     <SelectItem key={tier} value={tier}>
-                      {tier.charAt(0).toUpperCase() + tier.slice(1)}
+                      {TIER_LABELS[tier] || tier}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -818,7 +834,7 @@ export default function RateCardsPage() {
                 <SelectContent>
                   {EXPERT_TIERS.map((tier) => (
                     <SelectItem key={tier} value={tier}>
-                      {tier.charAt(0).toUpperCase() + tier.slice(1)}
+                      {TIER_LABELS[tier] || tier}
                     </SelectItem>
                   ))}
                 </SelectContent>
