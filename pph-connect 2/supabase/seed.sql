@@ -348,7 +348,103 @@ ON CONFLICT (id) DO UPDATE SET
   effective_to = EXCLUDED.effective_to;
 
 -- ============================================================================
--- 13. VERIFICATION QUERIES
+-- 13. LOCALE MAPPINGS
+-- ============================================================================
+-- Maps client-specific locale codes to standardized ISO codes for ETL
+-- Includes common variations and non-standard codes that may appear in CSV imports
+INSERT INTO public.locale_mappings (id, client_locale_code, standard_iso_code, locale_name, created_at)
+VALUES
+  -- Standard ISO codes (direct mappings)
+  ('f1111111-1111-1111-1111-111111111111', 'en', 'en', 'English', NOW()),
+  ('f1111112-1111-1111-1111-111111111111', 'es', 'es', 'Spanish', NOW()),
+  ('f1111113-1111-1111-1111-111111111111', 'fr', 'fr', 'French', NOW()),
+  ('f1111114-1111-1111-1111-111111111111', 'de', 'de', 'German', NOW()),
+  ('f1111115-1111-1111-1111-111111111111', 'it', 'it', 'Italian', NOW()),
+  ('f1111116-1111-1111-1111-111111111111', 'pt', 'pt', 'Portuguese', NOW()),
+  ('f1111117-1111-1111-1111-111111111111', 'nl', 'nl', 'Dutch', NOW()),
+  ('f1111118-1111-1111-1111-111111111111', 'pl', 'pl', 'Polish', NOW()),
+  ('f1111119-1111-1111-1111-111111111111', 'ru', 'ru', 'Russian', NOW()),
+  ('f111111a-1111-1111-1111-111111111111', 'ja', 'ja', 'Japanese', NOW()),
+  ('f111111b-1111-1111-1111-111111111111', 'ko', 'ko', 'Korean', NOW()),
+  ('f111111c-1111-1111-1111-111111111111', 'zh', 'zh', 'Chinese', NOW()),
+  ('f111111d-1111-1111-1111-111111111111', 'ar', 'ar', 'Arabic', NOW()),
+  ('f111111e-1111-1111-1111-111111111111', 'hi', 'hi', 'Hindi', NOW()),
+  ('f111111f-1111-1111-1111-111111111111', 'th', 'th', 'Thai', NOW()),
+  ('f1111120-1111-1111-1111-111111111111', 'vi', 'vi', 'Vietnamese', NOW()),
+  ('f1111121-1111-1111-1111-111111111111', 'id', 'id', 'Indonesian', NOW()),
+  ('f1111122-1111-1111-1111-111111111111', 'ms', 'ms', 'Malay', NOW()),
+  ('f1111123-1111-1111-1111-111111111111', 'tr', 'tr', 'Turkish', NOW()),
+  ('f1111124-1111-1111-1111-111111111111', 'he', 'he', 'Hebrew', NOW()),
+  ('f1111125-1111-1111-1111-111111111111', 'sv', 'sv', 'Swedish', NOW()),
+  ('f1111126-1111-1111-1111-111111111111', 'da', 'da', 'Danish', NOW()),
+  ('f1111127-1111-1111-1111-111111111111', 'no', 'no', 'Norwegian', NOW()),
+  ('f1111128-1111-1111-1111-111111111111', 'fi', 'fi', 'Finnish', NOW()),
+  ('f1111129-1111-1111-1111-111111111111', 'cs', 'cs', 'Czech', NOW()),
+  ('f111112a-1111-1111-1111-111111111111', 'hu', 'hu', 'Hungarian', NOW()),
+  ('f111112b-1111-1111-1111-111111111111', 'ro', 'ro', 'Romanian', NOW()),
+  ('f111112c-1111-1111-1111-111111111111', 'uk', 'uk', 'Ukrainian', NOW()),
+  ('f111112d-1111-1111-1111-111111111111', 'el', 'el', 'Greek', NOW()),
+  ('f111112e-1111-1111-1111-111111111111', 'bg', 'bg', 'Bulgarian', NOW()),
+
+  -- Regional variants (BCP 47 format)
+  ('f2222221-2222-2222-2222-222222222222', 'en-US', 'en', 'English (United States)', NOW()),
+  ('f2222222-2222-2222-2222-222222222222', 'en-GB', 'en', 'English (United Kingdom)', NOW()),
+  ('f2222223-2222-2222-2222-222222222222', 'en-AU', 'en', 'English (Australia)', NOW()),
+  ('f2222224-2222-2222-2222-222222222222', 'en-CA', 'en', 'English (Canada)', NOW()),
+  ('f2222225-2222-2222-2222-222222222222', 'en-IN', 'en', 'English (India)', NOW()),
+  ('f2222226-2222-2222-2222-222222222222', 'es-ES', 'es', 'Spanish (Spain)', NOW()),
+  ('f2222227-2222-2222-2222-222222222222', 'es-MX', 'es', 'Spanish (Mexico)', NOW()),
+  ('f2222228-2222-2222-2222-222222222222', 'es-AR', 'es', 'Spanish (Argentina)', NOW()),
+  ('f2222229-2222-2222-2222-222222222222', 'es-CO', 'es', 'Spanish (Colombia)', NOW()),
+  ('f222222a-2222-2222-2222-222222222222', 'pt-BR', 'pt', 'Portuguese (Brazil)', NOW()),
+  ('f222222b-2222-2222-2222-222222222222', 'pt-PT', 'pt', 'Portuguese (Portugal)', NOW()),
+  ('f222222c-2222-2222-2222-222222222222', 'fr-FR', 'fr', 'French (France)', NOW()),
+  ('f222222d-2222-2222-2222-222222222222', 'fr-CA', 'fr', 'French (Canada)', NOW()),
+  ('f222222e-2222-2222-2222-222222222222', 'de-DE', 'de', 'German (Germany)', NOW()),
+  ('f222222f-2222-2222-2222-222222222222', 'de-AT', 'de', 'German (Austria)', NOW()),
+  ('f2222230-2222-2222-2222-222222222222', 'de-CH', 'de', 'German (Switzerland)', NOW()),
+  ('f2222231-2222-2222-2222-222222222222', 'zh-CN', 'zh', 'Chinese (Simplified)', NOW()),
+  ('f2222232-2222-2222-2222-222222222222', 'zh-TW', 'zh', 'Chinese (Traditional)', NOW()),
+  ('f2222233-2222-2222-2222-222222222222', 'zh-HK', 'zh', 'Chinese (Hong Kong)', NOW()),
+  ('f2222234-2222-2222-2222-222222222222', 'ar-SA', 'ar', 'Arabic (Saudi Arabia)', NOW()),
+  ('f2222235-2222-2222-2222-222222222222', 'ar-EG', 'ar', 'Arabic (Egypt)', NOW()),
+
+  -- Common non-standard variations (ETL normalization)
+  ('f3333331-3333-3333-3333-333333333333', 'english', 'en', 'English (full name)', NOW()),
+  ('f3333332-3333-3333-3333-333333333333', 'spanish', 'es', 'Spanish (full name)', NOW()),
+  ('f3333333-3333-3333-3333-333333333333', 'french', 'fr', 'French (full name)', NOW()),
+  ('f3333334-3333-3333-3333-333333333333', 'german', 'de', 'German (full name)', NOW()),
+  ('f3333335-3333-3333-3333-333333333333', 'chinese', 'zh', 'Chinese (full name)', NOW()),
+  ('f3333336-3333-3333-3333-333333333333', 'japanese', 'ja', 'Japanese (full name)', NOW()),
+  ('f3333337-3333-3333-3333-333333333333', 'korean', 'ko', 'Korean (full name)', NOW()),
+  ('f3333338-3333-3333-3333-333333333333', 'arabic', 'ar', 'Arabic (full name)', NOW()),
+  ('f3333339-3333-3333-3333-333333333333', 'hindi', 'hi', 'Hindi (full name)', NOW()),
+  ('f333333a-3333-3333-3333-333333333333', 'portuguese', 'pt', 'Portuguese (full name)', NOW()),
+  ('f333333b-3333-3333-3333-333333333333', 'russian', 'ru', 'Russian (full name)', NOW()),
+  ('f333333c-3333-3333-3333-333333333333', 'italian', 'it', 'Italian (full name)', NOW()),
+  ('f333333d-3333-3333-3333-333333333333', 'dutch', 'nl', 'Dutch (full name)', NOW()),
+  ('f333333e-3333-3333-3333-333333333333', 'polish', 'pl', 'Polish (full name)', NOW()),
+  ('f333333f-3333-3333-3333-333333333333', 'turkish', 'tr', 'Turkish (full name)', NOW()),
+
+  -- Legacy/alternate codes
+  ('f4444441-4444-4444-4444-444444444444', 'eng', 'en', 'English (ISO 639-2)', NOW()),
+  ('f4444442-4444-4444-4444-444444444444', 'spa', 'es', 'Spanish (ISO 639-2)', NOW()),
+  ('f4444443-4444-4444-4444-444444444444', 'fra', 'fr', 'French (ISO 639-2)', NOW()),
+  ('f4444444-4444-4444-4444-444444444444', 'deu', 'de', 'German (ISO 639-2)', NOW()),
+  ('f4444445-4444-4444-4444-444444444444', 'zho', 'zh', 'Chinese (ISO 639-2)', NOW()),
+  ('f4444446-4444-4444-4444-444444444444', 'jpn', 'ja', 'Japanese (ISO 639-2)', NOW()),
+  ('f4444447-4444-4444-4444-444444444444', 'kor', 'ko', 'Korean (ISO 639-2)', NOW()),
+  ('f4444448-4444-4444-4444-444444444444', 'ara', 'ar', 'Arabic (ISO 639-2)', NOW()),
+  ('f4444449-4444-4444-4444-444444444444', 'hin', 'hi', 'Hindi (ISO 639-2)', NOW()),
+  ('f444444a-4444-4444-4444-444444444444', 'por', 'pt', 'Portuguese (ISO 639-2)', NOW()),
+  ('f444444b-4444-4444-4444-444444444444', 'rus', 'ru', 'Russian (ISO 639-2)', NOW()),
+  ('f444444c-4444-4444-4444-444444444444', 'ita', 'it', 'Italian (ISO 639-2)', NOW())
+ON CONFLICT (client_locale_code) DO UPDATE SET
+  standard_iso_code = EXCLUDED.standard_iso_code,
+  locale_name = EXCLUDED.locale_name;
+
+-- ============================================================================
+-- 14. VERIFICATION QUERIES
 -- ============================================================================
 -- Display summary of seeded data
 DO $$
@@ -363,6 +459,7 @@ DECLARE
   assignment_count INT;
   stats_count INT;
   rates_count INT;
+  locale_count INT;
 BEGIN
   SELECT COUNT(*) INTO dept_count FROM public.departments;
   SELECT COUNT(*) INTO profile_count FROM public.profiles;
@@ -374,6 +471,7 @@ BEGIN
   SELECT COUNT(*) INTO assignment_count FROM public.worker_assignments WHERE removed_at IS NULL;
   SELECT COUNT(*) INTO stats_count FROM public.work_stats;
   SELECT COUNT(*) INTO rates_count FROM public.rates_payable;
+  SELECT COUNT(*) INTO locale_count FROM public.locale_mappings;
 
   RAISE NOTICE '============================================================================';
   RAISE NOTICE 'SEED DATA SUMMARY';
@@ -388,6 +486,7 @@ BEGIN
   RAISE NOTICE 'Worker Assignments:    % records (active)', assignment_count;
   RAISE NOTICE 'Work Stats:            % records', stats_count;
   RAISE NOTICE 'Rates Payable:         % records', rates_count;
+  RAISE NOTICE 'Locale Mappings:       % records', locale_count;
   RAISE NOTICE '============================================================================';
 END $$;
 
