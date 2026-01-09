@@ -64,7 +64,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { format } from 'date-fns'
 import {
   Plus,
@@ -116,7 +116,6 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'PHP', 'INR', 'MXN']
 
 export default function RateCardsPage() {
   const { user } = useAuth()
-  const { toast } = useToast()
   const queryClient = useQueryClient()
 
   const [sorting, setSorting] = useState<SortingState>([])
@@ -200,15 +199,12 @@ export default function RateCardsPage() {
       queryClient.invalidateQueries({ queryKey: ['rates-payable'] })
       setIsAddDialogOpen(false)
       resetForm()
-      toast({
-        title: 'Rate Added',
+      toast.success('Rate Added', {
         description: 'The rate card has been created successfully.',
       })
     },
     onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
+      toast.error('Error', {
         description: error.message,
       })
     },
@@ -246,15 +242,12 @@ export default function RateCardsPage() {
       setIsEditDialogOpen(false)
       setSelectedRate(null)
       resetForm()
-      toast({
-        title: 'Rate Updated',
+      toast.success('Rate Updated', {
         description: 'The rate card has been updated successfully.',
       })
     },
     onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
+      toast.error('Error', {
         description: error.message,
       })
     },
@@ -284,15 +277,12 @@ export default function RateCardsPage() {
       queryClient.invalidateQueries({ queryKey: ['rates-payable'] })
       setIsDeleteDialogOpen(false)
       setSelectedRate(null)
-      toast({
-        title: 'Rate Deactivated',
+      toast.success('Rate Deactivated', {
         description: 'The rate card has been deactivated.',
       })
     },
     onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
+      toast.error('Error', {
         description: error.message,
       })
     },
@@ -329,6 +319,65 @@ export default function RateCardsPage() {
   const handleDeactivate = (rate: RatePayable) => {
     setSelectedRate(rate)
     setIsDeleteDialogOpen(true)
+  }
+
+  // Validate date range: effective_to must be after effective_from (or empty)
+  const isDateRangeValid = (from: string, to: string): boolean => {
+    if (!to) return true // Empty effective_to is valid (indefinite)
+    return new Date(to) > new Date(from)
+  }
+
+  // Validate form and return array of missing fields
+  const validateForm = (): string[] => {
+    const missingFields: string[] = []
+    if (!formData.locale) missingFields.push('Locale')
+    if (!formData.expert_tier) missingFields.push('Expert Tier')
+    if (!formData.country) missingFields.push('Country')
+    if (!formData.currency) missingFields.push('Currency')
+    if (!formData.effective_from) missingFields.push('Effective From')
+    return missingFields
+  }
+
+  const handleAddRate = () => {
+    // Check required fields first
+    const missingFields = validateForm()
+    if (missingFields.length > 0) {
+      toast.error('Missing Required Fields', {
+        description: `Please fill in: ${missingFields.join(', ')}`,
+      })
+      return
+    }
+
+    // Check date range
+    if (formData.effective_to && !isDateRangeValid(formData.effective_from, formData.effective_to)) {
+      toast.error('Invalid Date Range', {
+        description: 'Effective To date must be after Effective From date.',
+      })
+      return
+    }
+    addMutation.mutate(formData)
+  }
+
+  const handleEditRate = () => {
+    if (!selectedRate) return
+
+    // Check required fields first
+    const missingFields = validateForm()
+    if (missingFields.length > 0) {
+      toast.error('Missing Required Fields', {
+        description: `Please fill in: ${missingFields.join(', ')}`,
+      })
+      return
+    }
+
+    // Check date range
+    if (formData.effective_to && !isDateRangeValid(formData.effective_from, formData.effective_to)) {
+      toast.error('Invalid Date Range', {
+        description: 'Effective To date must be after Effective From date.',
+      })
+      return
+    }
+    editMutation.mutate({ id: selectedRate.id, data: formData })
   }
 
   const isRateActive = (rate: RatePayable) => {
@@ -718,7 +767,7 @@ export default function RateCardsPage() {
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="country">Country</Label>
+              <Label htmlFor="country">Country *</Label>
               <Input
                 id="country"
                 placeholder="e.g., US, MX, PH"
@@ -794,8 +843,8 @@ export default function RateCardsPage() {
               Cancel
             </Button>
             <Button
-              onClick={() => addMutation.mutate(formData)}
-              disabled={!formData.locale || !formData.expert_tier || !formData.currency || !formData.effective_from || addMutation.isPending}
+              onClick={handleAddRate}
+              disabled={addMutation.isPending}
             >
               {addMutation.isPending ? 'Adding...' : 'Add Rate'}
             </Button>
@@ -841,7 +890,7 @@ export default function RateCardsPage() {
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-country">Country</Label>
+              <Label htmlFor="edit-country">Country *</Label>
               <Input
                 id="edit-country"
                 placeholder="e.g., US, MX, PH"
@@ -917,8 +966,8 @@ export default function RateCardsPage() {
               Cancel
             </Button>
             <Button
-              onClick={() => selectedRate && editMutation.mutate({ id: selectedRate.id, data: formData })}
-              disabled={!formData.locale || !formData.expert_tier || !formData.currency || !formData.effective_from || editMutation.isPending}
+              onClick={handleEditRate}
+              disabled={editMutation.isPending}
             >
               {editMutation.isPending ? 'Saving...' : 'Save Changes'}
             </Button>
