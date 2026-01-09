@@ -11,6 +11,7 @@ import { ProfileTab } from './tabs/ProfileTab'
 import { AccountsTab } from './tabs/AccountsTab'
 import { ProjectsTab } from './tabs/ProjectsTab'
 import { ActivityTab } from './tabs/ActivityTab'
+import { EarningsTab } from './tabs/EarningsTab'
 
 type Worker = {
   id: string
@@ -201,6 +202,7 @@ export function WorkerDetail() {
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="accounts">Accounts</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>
+          <TabsTrigger value="earnings">Earnings</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
 
@@ -214,6 +216,10 @@ export function WorkerDetail() {
 
         <TabsContent value="projects" className="mt-6">
           <ProjectsTab workerId={worker.id} workerName={worker.full_name} />
+        </TabsContent>
+
+        <TabsContent value="earnings" className="mt-6">
+          <EarningsTab workerId={worker.id} workerName={worker.full_name} />
         </TabsContent>
 
         <TabsContent value="activity" className="mt-6">
