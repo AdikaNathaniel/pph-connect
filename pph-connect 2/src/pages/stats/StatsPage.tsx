@@ -14,7 +14,6 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -36,7 +35,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
-import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns'
+import { format, subDays, startOfMonth, endOfMonth, subMonths, parseISO } from 'date-fns'
 import {
   Upload,
   Calendar as CalendarIcon,
@@ -47,8 +46,24 @@ import {
   TrendingUp,
   Clock,
   DollarSign,
+  Users,
+  Trophy,
+  Medal,
+  Award,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts'
 
 type WorkStat = {
   id: string
@@ -179,6 +194,7 @@ export function StatsPage() {
         totalEarnings: 0,
         avgUnitsPerDay: 0,
         avgHoursPerDay: 0,
+        activeWorkers: 0,
       }
     }
 
@@ -186,6 +202,7 @@ export function StatsPage() {
     const totalHours = workStats.reduce((sum, stat) => sum + (stat.hours_worked || 0), 0)
     const totalEarnings = workStats.reduce((sum, stat) => sum + (stat.earnings || 0), 0)
     const uniqueDays = new Set(workStats.map((s) => s.work_date)).size
+    const activeWorkers = new Set(workStats.map((s) => s.worker_id)).size
 
     return {
       totalRecords: workStats.length,
@@ -194,7 +211,70 @@ export function StatsPage() {
       totalEarnings,
       avgUnitsPerDay: uniqueDays > 0 ? Math.round(totalUnits / uniqueDays) : 0,
       avgHoursPerDay: uniqueDays > 0 ? (totalHours / uniqueDays).toFixed(1) : '0',
+      activeWorkers,
     }
+  }, [workStats])
+
+  // Calculate earnings over time (grouped by date)
+  const earningsOverTime = useMemo(() => {
+    if (!workStats || workStats.length === 0) return []
+
+    const earningsByDate: Record<string, number> = {}
+    workStats.forEach((stat) => {
+      const date = stat.work_date
+      earningsByDate[date] = (earningsByDate[date] || 0) + (stat.earnings || 0)
+    })
+
+    return Object.entries(earningsByDate)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, earnings]) => ({
+        date: format(parseISO(date), 'MMM d'),
+        fullDate: date,
+        earnings: Number(earnings.toFixed(2)),
+      }))
+  }, [workStats])
+
+  // Calculate units by project
+  const unitsByProject = useMemo(() => {
+    if (!workStats || workStats.length === 0) return []
+
+    const projectStats: Record<string, { name: string; units: number; hours: number }> = {}
+    workStats.forEach((stat) => {
+      const projectId = stat.project_id
+      const projectName = stat.project?.name || 'Unknown Project'
+      if (!projectStats[projectId]) {
+        projectStats[projectId] = { name: projectName, units: 0, hours: 0 }
+      }
+      projectStats[projectId].units += stat.units_completed || 0
+      projectStats[projectId].hours += stat.hours_worked || 0
+    })
+
+    return Object.values(projectStats)
+      .sort((a, b) => b.units - a.units)
+      .slice(0, 5) // Top 5 projects
+  }, [workStats])
+
+  // Calculate top earners
+  const topEarners = useMemo(() => {
+    if (!workStats || workStats.length === 0) return []
+
+    const workerStats: Record<string, { name: string; hrId: string; earnings: number; units: number; hours: number }> = {}
+    workStats.forEach((stat) => {
+      const workerId = stat.worker_id
+      const workerName = stat.worker?.full_name || 'Unknown Worker'
+      const hrId = stat.worker?.hr_id || ''
+      if (!workerStats[workerId]) {
+        workerStats[workerId] = { name: workerName, hrId, earnings: 0, units: 0, hours: 0 }
+      }
+      workerStats[workerId].earnings += stat.earnings || 0
+      workerStats[workerId].units += stat.units_completed || 0
+      workerStats[workerId].hours += stat.hours_worked || 0
+    })
+
+    return Object.entries(workerStats)
+      .map(([id, stats]) => ({ id, ...stats }))
+      .sort((a, b) => b.earnings - a.earnings)
+      .slice(0, 10) // Top 10 earners
   }, [workStats])
 
   // Table columns
@@ -392,13 +472,13 @@ export function StatsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Records</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Active Workers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{summaryStats.totalRecords.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{summaryStats.activeWorkers.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              In selected date range
+              {summaryStats.totalRecords} records in period
             </p>
           </CardContent>
         </Card>
@@ -442,6 +522,185 @@ export function StatsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Earnings Over Time - Line Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Earnings Over Time
+            </CardTitle>
+            <CardDescription>Daily earnings in selected period</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {earningsOverTime.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={earningsOverTime}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `$${value}`}
+                  />
+                  <Tooltip
+                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Earnings']}
+                    labelFormatter={(label) => `Date: ${label}`}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="earnings"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                No earnings data available
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Units by Project - Bar Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Units by Project
+            </CardTitle>
+            <CardDescription>Top 5 projects by units completed</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {unitsByProject.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={unitsByProject} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={true} vertical={false} />
+                  <XAxis
+                    type="number"
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={150}
+                  />
+                  <Tooltip
+                    formatter={(value: number, name: string) => [
+                      value.toLocaleString(),
+                      name === 'units' ? 'Units' : 'Hours'
+                    ]}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Bar
+                    dataKey="units"
+                    fill="hsl(var(--primary))"
+                    radius={[0, 4, 4, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                No project data available
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top Earners Leaderboard */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-yellow-500" />
+            Top Earners
+          </CardTitle>
+          <CardDescription>Workers ranked by earnings in selected period</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {topEarners.length > 0 ? (
+            <div className="space-y-3">
+              {topEarners.map((earner, index) => {
+                const getRankIcon = (rank: number) => {
+                  switch (rank) {
+                    case 0: return <Trophy className="h-5 w-5 text-yellow-500" />
+                    case 1: return <Medal className="h-5 w-5 text-gray-400" />
+                    case 2: return <Award className="h-5 w-5 text-amber-600" />
+                    default: return <span className="w-5 h-5 flex items-center justify-center text-sm font-medium text-muted-foreground">{rank + 1}</span>
+                  }
+                }
+
+                return (
+                  <div
+                    key={earner.id}
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg border",
+                      index === 0 && "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800",
+                      index === 1 && "bg-gray-50 border-gray-200 dark:bg-gray-900/20 dark:border-gray-700",
+                      index === 2 && "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800",
+                      index > 2 && "bg-muted/30"
+                    )}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center justify-center w-8">
+                        {getRankIcon(index)}
+                      </div>
+                      <div>
+                        <div className="font-medium">{earner.name}</div>
+                        <div className="text-xs text-muted-foreground">{earner.hrId}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6 text-right">
+                      <div>
+                        <div className="text-sm text-muted-foreground">Units</div>
+                        <div className="font-medium">{earner.units.toLocaleString()}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-muted-foreground">Hours</div>
+                        <div className="font-medium">{earner.hours.toFixed(1)}h</div>
+                      </div>
+                      <div className="min-w-[80px]">
+                        <div className="text-sm text-muted-foreground">Earnings</div>
+                        <div className="font-bold text-green-600 dark:text-green-400">${earner.earnings.toFixed(2)}</div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+              <Trophy className="h-12 w-12 mb-4 opacity-50" />
+              <p>No earner data available</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card>

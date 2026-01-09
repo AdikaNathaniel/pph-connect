@@ -689,7 +689,7 @@ export default function WorkStatsImport() {
                 <code className="text-xs bg-muted px-1 py-0.5 rounded">project_code</code> - Project code (e.g., VA-ENG-2024)
               </li>
               <li>
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">work_date</code> - Date in YYYY-MM-DD format
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">work_date</code> - Date in YYYY-MM-DD or DD/MM/YYYY format
               </li>
             </ul>
           </div>

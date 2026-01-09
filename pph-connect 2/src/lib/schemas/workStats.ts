@@ -3,13 +3,80 @@ import { z } from 'zod'
 // UUID regex that accepts standard UUID format (8-4-4-4-12 hex characters)
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+// Date format regex patterns
+const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/ // YYYY-MM-DD
+const dmyDateRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/ // D/M/YYYY or DD/MM/YYYY
+
+/**
+ * Normalize date string to YYYY-MM-DD format
+ * Accepts: YYYY-MM-DD, DD/MM/YYYY, D/M/YYYY
+ */
+export function normalizeDateToISO(dateStr: string): string {
+  if (!dateStr || typeof dateStr !== 'string') {
+    return dateStr
+  }
+
+  const trimmed = dateStr.trim()
+
+  // Already in ISO format (YYYY-MM-DD)
+  if (isoDateRegex.test(trimmed)) {
+    return trimmed
+  }
+
+  // DD/MM/YYYY or D/M/YYYY format
+  if (dmyDateRegex.test(trimmed)) {
+    const parts = trimmed.split('/')
+    const day = parts[0].padStart(2, '0')
+    const month = parts[1].padStart(2, '0')
+    const year = parts[2]
+    return `${year}-${month}-${day}`
+  }
+
+  // Return as-is if no match (will fail validation)
+  return trimmed
+}
+
+/**
+ * Custom Zod transformer for flexible date parsing
+ * Accepts YYYY-MM-DD or DD/MM/YYYY formats, outputs YYYY-MM-DD
+ */
+const flexibleDateSchema = z.string().transform((val, ctx) => {
+  const normalized = normalizeDateToISO(val)
+
+  // Validate the normalized date is in correct format
+  if (!isoDateRegex.test(normalized)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Invalid date format (use YYYY-MM-DD or DD/MM/YYYY)',
+    })
+    return z.NEVER
+  }
+
+  // Validate the date is actually valid (e.g., not 32/13/2024)
+  const [year, month, day] = normalized.split('-').map(Number)
+  const date = new Date(year, month - 1, day)
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Invalid date (check day/month values)',
+    })
+    return z.NEVER
+  }
+
+  return normalized
+})
+
 /**
  * Schema for validating work stats CSV row data (user-friendly format)
  *
  * Expected CSV columns:
  * - worker_account_email: Email of the worker account (e.g., john.doe@pph.com)
  * - project_code: Project code (e.g., VA-ENG-2024)
- * - work_date: Date in YYYY-MM-DD format
+ * - work_date: Date in YYYY-MM-DD or DD/MM/YYYY format (will be normalized to YYYY-MM-DD)
  * - units_completed: Number of units completed (optional)
  * - hours_worked: Decimal number of hours (optional)
  * - earnings: Decimal earnings amount (optional)
@@ -17,7 +84,7 @@ const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
 export const workStatCsvRowSchema = z.object({
   worker_account_email: z.string().email('Invalid email format'),
   project_code: z.string().min(1, 'Project code is required'),
-  work_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (use YYYY-MM-DD)'),
+  work_date: flexibleDateSchema,
   units_completed: z.coerce.number().int().positive('Units must be greater than 0').optional().nullable(),
   hours_worked: z.coerce.number().positive('Hours must be greater than 0').max(24, 'Hours cannot exceed 24').optional().nullable(),
   earnings: z.coerce.number().nonnegative('Earnings must be non-negative').optional().nullable(),
