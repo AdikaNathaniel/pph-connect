@@ -36,7 +36,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
-import { format, subDays, startOfMonth, endOfMonth } from 'date-fns'
+import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import {
   Upload,
   Calendar as CalendarIcon,
@@ -49,7 +49,6 @@ import {
   DollarSign,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { DateRange } from 'react-day-picker'
 
 type WorkStat = {
   id: string
@@ -89,11 +88,9 @@ export function StatsPage() {
   const navigate = useNavigate()
   const [sorting, setSorting] = useState<SortingState>([{ id: 'work_date', desc: true }])
 
-  // Filter states
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 30),
-    to: new Date(),
-  })
+  // Filter states - separate from and to dates for independent selection
+  const [fromDate, setFromDate] = useState<Date | undefined>(subDays(new Date(), 30))
+  const [toDate, setToDate] = useState<Date | undefined>(new Date())
   const [selectedWorker, setSelectedWorker] = useState<string>('all')
   const [selectedProject, setSelectedProject] = useState<string>('all')
 
@@ -127,7 +124,7 @@ export function StatsPage() {
 
   // Fetch work stats with filters
   const { data: workStats, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['work-stats', dateRange, selectedWorker, selectedProject],
+    queryKey: ['work-stats', fromDate, toDate, selectedWorker, selectedProject],
     queryFn: async () => {
       let query = supabase
         .from('work_stats')
@@ -148,11 +145,11 @@ export function StatsPage() {
         .order('work_date', { ascending: false })
 
       // Apply date range filter
-      if (dateRange?.from) {
-        query = query.gte('work_date', format(dateRange.from, 'yyyy-MM-dd'))
+      if (fromDate) {
+        query = query.gte('work_date', format(fromDate, 'yyyy-MM-dd'))
       }
-      if (dateRange?.to) {
-        query = query.lte('work_date', format(dateRange.to, 'yyyy-MM-dd'))
+      if (toDate) {
+        query = query.lte('work_date', format(toDate, 'yyyy-MM-dd'))
       }
 
       // Apply worker filter
@@ -300,10 +297,8 @@ export function StatsPage() {
 
   // Clear all filters
   const clearFilters = () => {
-    setDateRange({
-      from: subDays(new Date(), 30),
-      to: new Date(),
-    })
+    setFromDate(subDays(new Date(), 30))
+    setToDate(new Date())
     setSelectedWorker('all')
     setSelectedProject('all')
   }
@@ -313,20 +308,33 @@ export function StatsPage() {
     const today = new Date()
     switch (preset) {
       case 'today':
-        setDateRange({ from: today, to: today })
+        setFromDate(today)
+        setToDate(today)
         break
       case 'last7':
-        setDateRange({ from: subDays(today, 7), to: today })
+        setFromDate(subDays(today, 7))
+        setToDate(today)
         break
       case 'last30':
-        setDateRange({ from: subDays(today, 30), to: today })
+        setFromDate(subDays(today, 30))
+        setToDate(today)
+        break
+      case 'last90':
+        setFromDate(subDays(today, 90))
+        setToDate(today)
         break
       case 'thisMonth':
-        setDateRange({ from: startOfMonth(today), to: endOfMonth(today) })
+        setFromDate(startOfMonth(today))
+        setToDate(endOfMonth(today))
         break
       case 'lastMonth':
-        const lastMonth = subDays(startOfMonth(today), 1)
-        setDateRange({ from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) })
+        const lastMonth = subMonths(today, 1)
+        setFromDate(startOfMonth(lastMonth))
+        setToDate(endOfMonth(lastMonth))
+        break
+      case 'allTime':
+        setFromDate(undefined)
+        setToDate(undefined)
         break
     }
   }
@@ -335,9 +343,8 @@ export function StatsPage() {
   const hasActiveFilters =
     selectedWorker !== 'all' ||
     selectedProject !== 'all' ||
-    (dateRange?.from && dateRange?.to &&
-      (format(dateRange.from, 'yyyy-MM-dd') !== format(subDays(new Date(), 30), 'yyyy-MM-dd') ||
-       format(dateRange.to, 'yyyy-MM-dd') !== format(new Date(), 'yyyy-MM-dd')))
+    (fromDate && format(fromDate, 'yyyy-MM-dd') !== format(subDays(new Date(), 30), 'yyyy-MM-dd')) ||
+    (toDate && format(toDate, 'yyyy-MM-dd') !== format(new Date(), 'yyyy-MM-dd'))
 
   if (isLoading) {
     return (
@@ -450,58 +457,84 @@ export function StatsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Date Range Picker */}
+          {/* Quick Date Presets */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Button variant="outline" size="sm" onClick={() => setQuickDateRange('today')}>
+              Today
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setQuickDateRange('last7')}>
+              Last 7 Days
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setQuickDateRange('last30')}>
+              Last 30 Days
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setQuickDateRange('last90')}>
+              Last 90 Days
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setQuickDateRange('thisMonth')}>
+              This Month
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setQuickDateRange('lastMonth')}>
+              Last Month
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setQuickDateRange('allTime')}>
+              All Time
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* From Date Picker */}
             <div className="space-y-2">
-              <Label>Date Range</Label>
+              <Label>From Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
                       'w-full justify-start text-left font-normal',
-                      !dateRange && 'text-muted-foreground'
+                      !fromDate && 'text-muted-foreground'
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateRange?.from ? (
-                      dateRange.to ? (
-                        <>
-                          {format(dateRange.from, 'MMM d')} - {format(dateRange.to, 'MMM d, yyyy')}
-                        </>
-                      ) : (
-                        format(dateRange.from, 'MMM d, yyyy')
-                      )
-                    ) : (
-                      <span>Pick a date range</span>
-                    )}
+                    {fromDate ? format(fromDate, 'MMM d, yyyy') : <span>Select start date</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <div className="flex flex-col">
-                    <div className="flex gap-1 p-2 border-b">
-                      <Button variant="ghost" size="sm" onClick={() => setQuickDateRange('today')}>
-                        Today
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setQuickDateRange('last7')}>
-                        Last 7d
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setQuickDateRange('last30')}>
-                        Last 30d
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setQuickDateRange('thisMonth')}>
-                        This Month
-                      </Button>
-                    </div>
-                    <Calendar
-                      initialFocus
-                      mode="range"
-                      defaultMonth={dateRange?.from}
-                      selected={dateRange}
-                      onSelect={setDateRange}
-                      numberOfMonths={2}
-                    />
-                  </div>
+                  <Calendar
+                    mode="single"
+                    selected={fromDate}
+                    onSelect={setFromDate}
+                    disabled={(date) => toDate ? date > toDate : false}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* To Date Picker */}
+            <div className="space-y-2">
+              <Label>To Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      'w-full justify-start text-left font-normal',
+                      !toDate && 'text-muted-foreground'
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {toDate ? format(toDate, 'MMM d, yyyy') : <span>Select end date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={toDate}
+                    onSelect={setToDate}
+                    disabled={(date) => fromDate ? date < fromDate : false}
+                    initialFocus
+                  />
                 </PopoverContent>
               </Popover>
             </div>
