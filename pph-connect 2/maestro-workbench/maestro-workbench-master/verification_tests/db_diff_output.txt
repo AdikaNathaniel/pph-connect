@@ -1,0 +1,13 @@
+DB Diff output shows all the messaging schema is MISSING from current database.
+The migrations exist but haven't been applied yet.
+
+Migrations seen:
+- 20251029110039_messaging_permission_helpers.sql
+- 20251029110040_extend_user_roles.sql (notes: enum values already exist)
+- 202510291100441_add_organizational_structure.sql
+- 20251029110042_create_messaging_tables.sql
+- 20251029110043_messaging_rls_policies.sql
+- 20251029110044_message_attachments_storage.sql
+
+Status: Migrations exist in files but NOT applied to local database yet.
+Need to check why migrations 110039-110044 weren't applied during db reset.

@@ -1,0 +1,39 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+
+const resolvePath = (...segments) => {
+  const candidates = [
+    path.join(process.cwd(), 'maestro-workbench', 'maestro-workbench-master', ...segments),
+    path.join(process.cwd(), ...segments),
+  ];
+  const match = candidates.find((candidate) => existsSync(candidate));
+  if (!match) {
+    throw new Error(`Unable to locate ${segments.join('/')}`);
+  }
+  return match;
+};
+
+const servicePath = resolvePath('src', 'services', 'forumService.ts');
+
+test('forumService exposes category and thread helpers', () => {
+  assert.ok(existsSync(servicePath), 'Expected forumService to exist');
+  const content = readFileSync(servicePath, 'utf8');
+  [
+    'getForumCategories',
+    'getThreadsByCategory',
+    'getPostsByThread',
+    'isModerator',
+    'moderateThread',
+    'moderatePost'
+  ].forEach((fn) => {
+    assert.match(content, new RegExp(`export\\s+(?:async\\s+function|const)\\s+${fn}`), `Expected ${fn} export`);
+  });
+  assert.match(
+    content,
+    /const\s+FORUM_CATEGORIES[^=]*=\s*\[/i,
+    'Expected static categories definition'
+  );
+  assert.match(content, /const\s+FORUM_THREADS[^=]*=\s*\[/i, 'Expected threads placeholder data');
+});

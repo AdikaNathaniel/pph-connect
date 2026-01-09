@@ -1,0 +1,3 @@
+hr_id,full_name,engagement_model,worker_role,email_personal,email_pph,country_residence,locale_primary,locale_all,hire_date,rtw_datetime,supervisor_id,termination_date,bgc_expiration_date,status
+HR-BULK-100,CSV Worker One,core,Reviewer,csv1@example.com,,US,en-US,"en-US|es-ES",2025-01-05,,,2025-12-31,active
+HR-BULK-101,CSV Worker Two,core,Reviewer,csv2@example.com,,US,en-US,"en-US",2025-01-06,,,2025-12-31,active

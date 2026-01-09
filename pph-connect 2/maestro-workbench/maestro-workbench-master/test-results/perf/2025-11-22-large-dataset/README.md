@@ -1,0 +1,1 @@
+Captured Chrome DevTools JSON traces and Lighthouse HTML reports for the large dataset run. Files are omitted from git for now to avoid binary bloat; re-run the tests with `npm run dev` + Chrome Performance panel to regenerate.***

@@ -1,0 +1,171 @@
+event_message	event_type	function_id	id	level	timestamp
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	80b7b381-64a8-4877-bdfa-f9de081706c3	log	1760549207552000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	f8059be6-98ce-46eb-b6b3-6de4dacb576d	log	1760549207271000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	dc54cc9c-402f-44ee-94a5-22a4f5c6d5a5	log	1760549207271000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	253fce08-448d-4ecf-a65e-49863dfb2476	log	1760549112826000
+"No available questions after filtering
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	61195517-d787-417b-8451-69eb323b11a6	info	1760549108585000
+"No available questions after filtering
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	fa2db07d-c29c-4eea-9c63-6ac08a8483c1	info	1760549108585000
+"RPC failed, using direct query approach
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	3895617f-43e7-4424-847a-af4a476078e3	info	1760549108007000
+"RPC claim failed, trying direct query: {
+  code: "42702",
+  details: "It could refer to either a PL/pgSQL variable or a table column.",
+  hint: null,
+  message: 'column reference "id" is ambiguous'
+}"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	608d1359-052c-460f-b572-b8933d69526c	error	1760549108007000
+"RPC claim failed, trying direct query: {
+  code: "42702",
+  details: "It could refer to either a PL/pgSQL variable or a table column.",
+  hint: null,
+  message: 'column reference "id" is ambiguous'
+}"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	ed90bc29-a215-48ce-aa3b-b10abf79c050	error	1760549108007000
+"RPC failed, using direct query approach
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	d257a0a8-1082-4a98-9afb-b98fabb9f064	info	1760549108007000
+Claiming question for project 5d4c281a-ec60-4292-a853-0be3be008842, worker 8178832e-3232-4c55-8002-636e9a7ccd33	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	14cb8a10-3ca1-43b2-876b-be9b2c4f87eb	info	1760549107114000
+Claiming question for project 5d4c281a-ec60-4292-a853-0be3be008842, worker 8178832e-3232-4c55-8002-636e9a7ccd33	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	0c304da9-3782-4107-89cb-647fc44f46b8	info	1760549107114000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	b9c49096-56fa-436b-928c-a08faf1f9b67	info	1760549107107000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	46c68883-4181-4555-a93b-4234ca2e120e	info	1760549107107000
+booted (time: 38ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	353c1f37-7b91-4ef8-a39b-39d229f3785f	log	1760549107102000
+booted (time: 38ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	210c51fe-0f9a-47db-b9f8-1954fa7049d2	log	1760549107102000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	39b67415-656c-4181-80f8-807f8240eee3	info	1760549106877000
+booted (time: 37ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	96064268-b16b-4a3a-801d-055f9e8aa8d5	log	1760549106873000
+"No available questions after filtering
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	953ac0c7-c86e-4023-b92e-fc84a2f12275	info	1760549007932000
+"RPC failed, using direct query approach
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	702e02d0-3e36-48c3-98c5-18a63d5141f7	info	1760549007693000
+"RPC claim failed, trying direct query: {
+  code: "42702",
+  details: "It could refer to either a PL/pgSQL variable or a table column.",
+  hint: null,
+  message: 'column reference "id" is ambiguous'
+}"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	ea73cd25-c50a-411b-9037-8f0246ceb9f1	error	1760549007693000
+Claiming question for project 1cceb0a2-02e5-4575-b6cb-d6c421408969, worker 92c926fd-7b49-414d-834a-dbd1c57e8f6d	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	11083385-d6a3-43c9-865d-0c0acc0eaeda	info	1760549007544000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	081c3d11-01fb-40ee-bdfc-85e038a76cf6	info	1760549007539000
+booted (time: 31ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	8c73f032-559b-470d-8973-9210015b072c	log	1760549007536000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	86809b3b-7356-4cd8-85cd-c37a47e7243e	info	1760549007232000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	177acb40-0a78-46bc-9e13-8e95de58985e	info	1760549007232000
+booted (time: 40ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	128d61f7-456a-40db-8cb2-d9a07bc7dfc6	log	1760549007227000
+booted (time: 40ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	4a294d64-c606-4149-9504-ac8b20518c78	log	1760549007227000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	49bd199d-5e35-4084-820f-d0f9165844fe	log	1760548985601000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	93659d8e-da82-4ad5-bd6c-4e49f8fb92ce	log	1760548980610000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	e308d7f2-a788-469a-8958-55217e76f339	log	1760548980436000
+"No available questions after filtering
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	986380d1-fb59-4a18-834d-101fc936d032	info	1760548946490000
+"RPC failed, using direct query approach
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	909a9681-bac9-4435-a2e5-b6262952e2cb	info	1760548946248000
+"RPC claim failed, trying direct query: {
+  code: "42702",
+  details: "It could refer to either a PL/pgSQL variable or a table column.",
+  hint: null,
+  message: 'column reference "id" is ambiguous'
+}"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	52fc7759-f737-4205-b79b-ff2745c72232	error	1760548946248000
+Claiming question for project 1cceb0a2-02e5-4575-b6cb-d6c421408969, worker 92c926fd-7b49-414d-834a-dbd1c57e8f6d	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	0b285bd0-a982-4c6d-9fab-7b9d2f40070c	info	1760548946100000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	65499f7d-ce07-4d36-9376-a57f0b21a555	info	1760548946095000
+booted (time: 28ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	59c50213-6647-4148-a452-5acf963eb9e6	log	1760548946092000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	1fa8c530-4c38-4c7c-a3c3-0420168adb7d	info	1760548945787000
+booted (time: 28ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	3806bd79-1398-43e6-9c86-bfab3ae984f3	log	1760548945786000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	8f17302a-d7a7-43f5-90dd-b478a1172d60	log	1760548933141000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	a2c4a6e8-ede7-4d99-bc13-2592a8e80253	log	1760548918713000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	bfb3a233-4094-4267-9d71-b412c21d357a	log	1760548894424000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	20303cbd-29c3-4afe-8340-f20494bcc430	log	1760548894123000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	74c5c23a-4b3e-4da2-8671-5d9518caefd9	log	1760548868493000
+"No available questions after filtering
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	1d073c39-c924-497e-a5fd-5e33124b3cd8	info	1760548864594000
+"RPC claim failed, trying direct query: {
+  code: "42702",
+  details: "It could refer to either a PL/pgSQL variable or a table column.",
+  hint: null,
+  message: 'column reference "id" is ambiguous'
+}"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	e08fecad-e0f4-4fe5-905a-4d1c9a3ed792	error	1760548864324000
+"RPC failed, using direct query approach
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	1e77b5e9-8027-4947-9bc2-8e75c9464056	info	1760548864324000
+Claiming question for project 1cceb0a2-02e5-4575-b6cb-d6c421408969, worker 92c926fd-7b49-414d-834a-dbd1c57e8f6d	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	f39b68e4-35ca-4e26-a250-211cfb59b670	info	1760548864162000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	47d2a71c-f3b1-48f4-b2aa-50f7b51fd62e	info	1760548864157000
+booted (time: 27ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	5dd3f934-7ac8-4ed7-ade8-d01513a40245	log	1760548864154000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	8b3f4335-f2c6-4f46-8840-7c123499e0e5	info	1760548863962000
+booted (time: 28ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	ddf3f110-d24c-404e-9558-f5002459d581	log	1760548863958000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	d9889be0-ca0c-4490-ad27-661da1a79a54	log	1760548839809000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	55837370-1506-4b7a-880f-f2ccad13e80d	log	1760548839570000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	1084d4fe-8208-4a73-b1ac-33373fe410f9	log	1760548811479000
+"No available questions after filtering
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	e840ee2b-2d3c-4431-9c58-df820abd6a3b	info	1760548780972000
+"RPC failed, using direct query approach
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	11edeefc-73bc-425e-b104-a2416ed6c458	info	1760548780738000
+"RPC claim failed, trying direct query: {
+  code: "42702",
+  details: "It could refer to either a PL/pgSQL variable or a table column.",
+  hint: null,
+  message: 'column reference "id" is ambiguous'
+}"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	81e33632-ff6d-4340-b433-d2db1ac0b6a2	error	1760548780738000
+Claiming question for project 1cceb0a2-02e5-4575-b6cb-d6c421408969, worker 92c926fd-7b49-414d-834a-dbd1c57e8f6d	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	a56f77f7-86f1-4eae-9f24-9ec3d5e209be	info	1760548780597000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	a3c4c90f-d48b-4294-80fb-df1c6744ca71	info	1760548780591000
+booted (time: 29ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	9acaa4cb-4930-40ac-a951-3201f3c92f65	log	1760548780588000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	c38b6869-74d1-44cc-96ad-c6b398ff816d	info	1760548780393000
+booted (time: 27ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	a3eaa586-412b-40fa-8e98-df0ff554b9f9	log	1760548780390000
+"No available questions after filtering
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	e9cc5363-f1c3-461a-8315-0ad297acc067	info	1760548719291000
+"RPC failed, using direct query approach
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	4d1ee677-e10c-4bf3-b333-1c5735d0da74	info	1760548719061000
+"RPC claim failed, trying direct query: {
+  code: "42702",
+  details: "It could refer to either a PL/pgSQL variable or a table column.",
+  hint: null,
+  message: 'column reference "id" is ambiguous'
+}"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	d01693c2-c2e2-4ed8-b70e-7a8d7a21ac18	error	1760548719061000
+Claiming question for project 1cceb0a2-02e5-4575-b6cb-d6c421408969, worker 92c926fd-7b49-414d-834a-dbd1c57e8f6d	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	e7e46a1c-6dbd-483f-90b0-ca0fbca7a656	info	1760548718704000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	42697041-f252-434c-808a-d52d436ebf1a	info	1760548718697000
+booted (time: 37ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	b06ca552-255a-4f8e-89d1-e213aa0ef9c8	log	1760548718692000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	39d0e6a2-7b10-4ca0-9788-883551980066	info	1760548718472000
+booted (time: 28ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	3c773d78-529c-4e3c-b730-e8efc1aa2cb3	log	1760548718469000
+"No available questions after filtering
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	255731d9-19a1-41e5-b4dc-835ecd3d33da	info	1760548694804000
+"RPC failed, using direct query approach
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	a6f95167-1390-480d-bcf8-09dac426984b	info	1760548694561000
+"RPC claim failed, trying direct query: {
+  code: "42702",
+  details: "It could refer to either a PL/pgSQL variable or a table column.",
+  hint: null,
+  message: 'column reference "id" is ambiguous'
+}"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	04c1dee3-49ff-43ce-aa10-5a1b5cd0cd3c	error	1760548694561000
+Claiming question for project 7e18521a-d2e7-470d-b0dd-1c717ed9e1bf, worker c10d9935-4cab-4411-9d4a-d0fb91717c1a	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	2a7db52a-0487-458d-b6d4-f3c5c64dd377	info	1760548694417000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	9b399625-ade9-46b9-b9c6-8a8315ff6693	info	1760548694412000
+booted (time: 27ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	da3c9aa1-8b25-432d-bb71-45f4df1ddc5e	log	1760548694409000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	0420fe7e-b485-4ead-b189-a02e747765c7	info	1760548694104000
+booted (time: 28ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	15f58446-f46b-4a54-a228-37179a24b7cc	log	1760548694101000
+"No available questions after filtering
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	e53396dc-8c84-40d9-9e5c-2f51e0dde2b8	info	1760548640433000
+"RPC claim failed, trying direct query: {
+  code: "42702",
+  details: "It could refer to either a PL/pgSQL variable or a table column.",
+  hint: null,
+  message: 'column reference "id" is ambiguous'
+}"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	35c0d9d9-ad2a-45c8-955a-403f120cfd39	error	1760548640177000
+"RPC failed, using direct query approach
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	6aff4c89-52ea-4aff-91c0-85cc08ae11bc	info	1760548640177000
+Claiming question for project 1cceb0a2-02e5-4575-b6cb-d6c421408969, worker 92c926fd-7b49-414d-834a-dbd1c57e8f6d	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	147a4510-05f4-4109-9053-2e4a106cd379	info	1760548639801000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	207cc772-0e28-4c9f-b8b8-bcc78bd1744f	info	1760548639796000
+booted (time: 28ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	487fdbfb-9703-4d38-8a7c-bf5b2ccadeab	log	1760548639793000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	dcda6925-59b7-4d64-8948-b634b93267fa	info	1760548639534000
+booted (time: 29ms)	Boot	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	a483a3c6-df20-4ad4-93cd-0ff13db08d93	log	1760548639531000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	e6c450fe-4173-46e3-8126-4acf27c66812	log	1760548612236000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	cc86aa6e-9919-4d93-bc92-39251839134e	log	1760548612036000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	465ef506-12ca-4359-92a1-3e5a9a7514f2	log	1760548612036000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	1101990d-4fca-48db-ac80-336d9ee213db	log	1760548531970000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	ed498f7f-6b58-47dd-ac03-3d76c100886b	log	1760548521623000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	d718a799-b62a-4bc5-b77d-8a6b763bb96b	log	1760548495963000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	ab6688d1-5d7f-4adb-8dac-189000bbe415	log	1760548447918000
+"No available questions after filtering
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	f5f967bd-9f4f-47f8-86d2-1675f97d2a5d	info	1760548412775000
+"RPC claim failed, trying direct query: {
+  code: "42702",
+  details: "It could refer to either a PL/pgSQL variable or a table column.",
+  hint: null,
+  message: 'column reference "id" is ambiguous'
+}"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	87b0c25b-5ec3-4d9a-b9a2-e357774f7751	error	1760548412544000
+"RPC failed, using direct query approach
+"	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	81cb9621-1d84-466c-ae4e-27224f184f02	info	1760548412544000
+shutdown	Shutdown	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	90fce68f-ef1a-48bd-af7a-0fa5668b93ec	log	1760548412416000
+Claiming question for project 1cceb0a2-02e5-4575-b6cb-d6c421408969, worker 92c926fd-7b49-414d-834a-dbd1c57e8f6d	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	7cdb0957-fd30-46dd-a50e-54d1b82c908b	info	1760548412227000
+Listening on http://localhost:9999/	Log	a1d482fa-ee13-4e5c-8b43-c64e2acc518b	d651bfac-6c02-4da2-a5e8-0f704ba6faf7	info	1760548412221000

@@ -1,0 +1,39 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Environment variables - Security: Never commit secrets
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+/database_baseline
+GROUP_MESSAGING_IMPLEMENTATION.md
+GOOGLE_OAUTH_SETUP_GUIDE.md
+MESSAGING_ENHANCEMENTS_ROADMAP.md
+MESSAGING_FEATURE_IMPLEMENTATION_PLAN.md
+MESSAGING_IMPLEMENTATION_TASKS.md
+.claude
+MESSAGING_INTEGRATION_PLAN.md
+MESSAGING_TESTING_GUIDE.md

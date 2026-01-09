@@ -1,0 +1,16 @@
+project_id = "nrocepvrheipthrqzwex"
+
+[functions.create-root-user]
+verify_jwt = false
+
+[functions.load-sheet-data]
+verify_jwt = false
+
+[functions.admin-create-user]
+verify_jwt = true
+
+[functions.reset-user-password]
+verify_jwt = true
+
+[functions.get-worker-analytics]
+verify_jwt = true

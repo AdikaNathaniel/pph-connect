@@ -1,0 +1,46 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+
+const resolvePath = (...segments) => {
+  const candidates = [
+    path.join(process.cwd(), 'maestro-workbench', 'maestro-workbench-master', ...segments),
+    path.join(process.cwd(), ...segments),
+  ];
+  const match = candidates.find((candidate) => existsSync(candidate));
+  if (!match) {
+    throw new Error(`Unable to locate ${segments.join('/')}`);
+  }
+  return match;
+};
+
+const pagePath = resolvePath('src', 'pages', 'manager', 'NewPlugin.tsx');
+
+test('NewPlugin imports modality template library', () => {
+  const content = readFileSync(pagePath, 'utf8');
+  assert.match(
+    content,
+    /import\s*\{\s*MODALITY_TEMPLATES\s*\}\s*from\s+'@\/lib\/modalityTemplates';/,
+    'Expected import from modalityTemplates helper'
+  );
+});
+
+test('NewPlugin renders template library cards with apply actions', () => {
+  const content = readFileSync(pagePath, 'utf8');
+  assert.match(
+    content,
+    /data-testid="modality-template-library"/,
+    'Expected wrapper test id for template library'
+  );
+  ['imageClassification', 'objectDetection', 'namedEntityRecognition', 'machineTranslationEvaluation', 'chatbotConversationRating'].forEach(
+    (templateId) => {
+      assert.match(
+        content,
+        new RegExp(`modality-template-\\$\\{template\\.id\\}`),
+        'Expected template literal for card test id'
+      );
+    }
+  );
+  assert.match(content, /Apply\s+Template/, 'Expected apply template action control');
+});

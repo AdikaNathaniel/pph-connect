@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Font optimization - ensure smooth loading with fallbacks */
+@supports (font-variation-settings: normal) {
+  * {
+    font-feature-settings: "salt" on, "ss01" on, "ss02" on;
+  }
+}
+
+/* shadcn/ui Blue Theme - Custom (Primary: blue-900 224.4 64.3% 32.9% / Accent: blue-50 213.8 100% 96.9%) */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 224.4 64.3% 32.9%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 213.8 100% 96.9%;
+    --accent-foreground: 222.2 84% 4.9%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 224.4 64.3% 32.9%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 210 40% 98%;
+    --sidebar-foreground: 222.2 47.4% 11.2%;
+    --sidebar-primary: 224.4 64.3% 32.9%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 222.2 84% 4.9%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 224.4 64.3% 32.9%;
+
+    --chart-1: 224.4 64.3% 32.9%;
+    --chart-2: 32 68% 55%;
+    --chart-3: 217.2 91.2% 59.8%;
+    --chart-4: 213.3 96.9% 87.3%;
+    --chart-5: 224.3 76.3% 48%;
+
+
+    --blue-50: 213.8 100% 96.9%;
+    --blue-100: 214.3 94.6% 92.7%;
+    --blue-200: 213.3 96.9% 87.3%;
+    --blue-300: 211.7 96.4% 78.4%;
+    --blue-400: 213.1 93.9% 67.8%;
+    --blue-500: 217.2 91.2% 59.8%;
+    --blue-600: 221.2 83.2% 53.3%;
+    --blue-700: 224.3 76.3% 48%;
+    --blue-800: 225.9 70.7% 40.2%;
+    --blue-900: 224.4 64.3% 32.9%;
+    --blue-950: 226.2 57% 21%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 217.2 91.2% 59.8%;
+
+    --sidebar-background: 222.2 47.4% 11.2%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217.2 91.2% 59.8%;
+    --sidebar-primary-foreground: 222.2 84% 4.9%;
+    --sidebar-accent: 215 27.9% 16.9%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --chart-1: 217.2 91.2% 59.8%;
+    --chart-2: 32 68% 55%;
+    --chart-3: 224.4 64.3% 32.9%;
+    --chart-4: 213.3 96.9% 87.3%;
+    --chart-5: 224.3 76.3% 48%;
+
+    --blue-50: 213.8 100% 96.9%;
+    --blue-100: 214.3 94.6% 92.7%;
+    --blue-200: 213.3 96.9% 87.3%;
+    --blue-300: 211.7 96.4% 78.4%;
+    --blue-400: 213.1 93.9% 67.8%;
+    --blue-500: 217.2 91.2% 59.8%;
+    --blue-600: 221.2 83.2% 53.3%;
+    --blue-700: 224.3 76.3% 48%;
+    --blue-800: 225.9 70.7% 40.2%;
+    --blue-900: 224.4 64.3% 32.9%;
+    --blue-950: 226.2 57% 21%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    /* Optimized for international script support - covers 100+ languages */
+    font-family: "Geist Variable", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+  }
+
+}
+
+@layer components {
+  input[aria-invalid="true"],
+  textarea[aria-invalid="true"],
+  button[aria-invalid="true"][role="combobox"] {
+    @apply border-destructive focus-visible:ring-destructive focus-visible:ring-offset-2;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M12 8v4m0 4h.01'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem 1rem;
+    padding-right: 2.75rem;
+    color: hsl(var(--destructive));
+    caret-color: hsl(var(--destructive));
+  }
+}

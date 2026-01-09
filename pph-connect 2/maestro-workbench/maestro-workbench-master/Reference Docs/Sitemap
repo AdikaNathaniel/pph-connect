@@ -1,0 +1,59 @@
+Current setup:
+src/pages/
+├── admin/Setup.tsx
+├── manager/
+│   ├── dashboard-archived/Dashboard.tsx (archived)
+│   ├── Dashboard.tsx
+│   ├── NewPlugin.tsx
+│   ├── NewProject.tsx
+│   ├── PasteLogs.tsx
+│   ├── PluginManager.tsx
+│   ├── ProjectAssignment.tsx
+│   ├── Questions.tsx
+│   ├── Stats.tsx
+│   └── UserManagement.tsx
+├── worker/
+│   ├── Analytics.tsx
+│   ├── NoTasks.tsx
+│   └── Workbench.tsx
+├── Auth.tsx
+├── ChangePassword.tsx
+├── Index.tsx
+├── Landing.tsx
+└── NotFound.tsx
+##How it should be (actual URLS, not necessarily the logic and layout application etc)
+#guiding principles:
+- there is a manager UI side and a worker UI side
+- only the login and auth pages are shared between the two sides
+- everything for the manager side must be be behind a /m/ URL
+- everything for the worker side must be be behind a /w/ URL
+Issue: Currently pages are all over. Some are behind /manager and others are not.
+
+Ideal Sitemap
+/ = landing page
+/auth = landing page without pre selection of role
+/w = worker auth page
+/m = manager auth page
+
+Manager side:
+/m/dashboard = manager dashboard (this is the default page for the manager side, if logged in as manager)
+/m/analytics = manager stats page (same as analytics links)
+/m/projects = manager projects page (same as projects links) content tbd
+    m/projects/new This should take you to the current /new-project page
+/m/users = manager users page (the current /manager/users page should be here)
+/m/assignments = manager assignments page (the current /manager/assignments page should be here)
+/m/plugins = manager plugins page  (the current /plugins page should be here. )
+    /m/plugins/new The current /plugins/new should be here.
+
+Current /questions/(…project id) should follow new logic: /m/projects/questions/(…project id)
+
+Worker side:
+/w/dashboard (the current /dashboard shows this when logged in as a worker. Must be separated at URL level!)
+    This page should allow them to launch the workbench. This way, they can log in without having the timer start right away.
+    The "Launch Question" button should take them to the workbench:
+/w/workbench:
+    This page currently is still caleed /dashboard when logged in as a worker. Must be a whole other URL and page!
+    This loads the project (plugin assigned to project plus tasks according to completed/pending project task data)
+/w/analytics
+    This page is currently already /analytics when logged in as a worker. Must be a whole other URL and page!
+

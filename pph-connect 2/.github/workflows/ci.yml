@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      PLAYWRIGHT_MANAGER_EMAIL: ${{ secrets.PLAYWRIGHT_MANAGER_EMAIL }}
+      PLAYWRIGHT_MANAGER_PASSWORD: ${{ secrets.PLAYWRIGHT_MANAGER_PASSWORD }}
+      PLAYWRIGHT_WORKER_EMAIL: ${{ secrets.PLAYWRIGHT_WORKER_EMAIL }}
+      PLAYWRIGHT_WORKER_PASSWORD: ${{ secrets.PLAYWRIGHT_WORKER_PASSWORD }}
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type generation, lint, and verification tests
+        run: npm run ci:verify
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Build application
+        run: npm run build
+
+      - name: Start preview server
+        run: npm run preview -- --host 127.0.0.1 --port 4173 &
+
+      - name: Wait for preview server
+        run: npx wait-on http://127.0.0.1:4173
+
+      - name: Run Playwright tests
+        run: npm run e2e
+
