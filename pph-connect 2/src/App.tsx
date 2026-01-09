@@ -16,6 +16,7 @@ import { TeamDetail } from '@/pages/teams/TeamDetail'
 import { DepartmentList } from '@/pages/departments/DepartmentList'
 import { DepartmentCreate } from '@/pages/departments/DepartmentCreate'
 import { DepartmentEdit } from '@/pages/departments/DepartmentEdit'
+import WorkStatsImport from '@/pages/stats/WorkStatsImport'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AppLayout } from '@/components/layout/AppLayout'
 
@@ -179,6 +180,16 @@ function App() {
           <ProtectedRoute>
             <AppLayout pageTitle="Edit Department">
               <DepartmentEdit />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stats/import"
+        element={
+          <ProtectedRoute>
+            <AppLayout pageTitle="Work Stats Import">
+              <WorkStatsImport />
             </AppLayout>
           </ProtectedRoute>
         }
