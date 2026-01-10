@@ -14,6 +14,7 @@ import {
 } from '@tanstack/react-table'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -74,6 +75,7 @@ type Worker = {
 export function WorkerList() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { isAdminOrAbove, isManagerOrAbove } = useAuth()
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
@@ -659,13 +661,17 @@ export function WorkerList() {
               Export CSV
             </Button>
           )}
-          <Button variant="outline" onClick={() => setShowBulkUpload(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Bulk Upload
-          </Button>
-          <Button onClick={() => navigate('/workers/create')}>
-            Create Worker
-          </Button>
+          {isManagerOrAbove && (
+            <>
+              <Button variant="outline" onClick={() => setShowBulkUpload(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Upload
+              </Button>
+              <Button onClick={() => navigate('/workers/create')}>
+                Create Worker
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -685,19 +691,25 @@ export function WorkerList() {
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowBulkStatusUpdate(true)}>
-              Change Status
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowBulkAssignToProject(true)}>
-              Assign to Project
-            </Button>
+            {isManagerOrAbove && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setShowBulkStatusUpdate(true)}>
+                  Change Status
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowBulkAssignToProject(true)}>
+                  Assign to Project
+                </Button>
+              </>
+            )}
             <Button variant="outline" size="sm" onClick={handleExportSelected}>
               <Download className="h-4 w-4 mr-2" />
               Export Selected
             </Button>
-            <Button variant="destructive" size="sm" onClick={() => setShowBulkDelete(true)}>
-              Delete Selected
-            </Button>
+            {isAdminOrAbove && (
+              <Button variant="destructive" size="sm" onClick={() => setShowBulkDelete(true)}>
+                Delete Selected
+              </Button>
+            )}
           </div>
         </div>
       )}

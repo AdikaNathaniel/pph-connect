@@ -11,6 +11,7 @@ import {
 } from '@tanstack/react-table'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -36,6 +37,7 @@ type Department = {
 export function DepartmentList() {
   const navigate = useNavigate()
   const [sorting, setSorting] = useState<SortingState>([])
+  const { isAdminOrAbove } = useAuth()
 
   // Fetch departments data (use distinct key since we need more fields than dropdown queries)
   const { data: departments, isLoading, isError, error } = useQuery({
@@ -174,10 +176,12 @@ export function DepartmentList() {
           <h1 className="text-3xl font-bold">Departments</h1>
           <p className="text-muted-foreground mt-1">Manage organizational departments ({departments?.length || 0} total)</p>
         </div>
-        <Button onClick={() => navigate('/departments/create')}>
-          <Building2 className="h-4 w-4 mr-2" />
-          Create Department
-        </Button>
+        {isAdminOrAbove && (
+          <Button onClick={() => navigate('/departments/create')}>
+            <Building2 className="h-4 w-4 mr-2" />
+            Create Department
+          </Button>
+        )}
       </div>
 
       {/* Table */}

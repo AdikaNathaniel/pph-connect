@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -29,12 +30,12 @@ type UserProfile = {
   id: string
   email: string
   full_name: string
-  role: 'super_admin' | 'admin' | 'manager' | 'team_lead' | 'worker'
+  role: 'root' | 'admin' | 'manager' | 'team_lead' | 'worker'
   suspended: boolean
   updated_at: string
 }
 
-const AVAILABLE_ROLES = ['super_admin', 'admin', 'manager', 'team_lead', 'worker'] as const
+const AVAILABLE_ROLES = ['root', 'admin', 'manager', 'team_lead', 'worker'] as const
 
 const formatTimestamp = (value: string | null) => {
   if (!value) return '—'
@@ -46,6 +47,8 @@ const formatTimestamp = (value: string | null) => {
 }
 
 const formatRoleLabel = (role: string) => {
+  // Special case for 'root' -> 'Super Admin'
+  if (role === 'root') return 'Super Admin'
   return role
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -54,6 +57,7 @@ const formatRoleLabel = (role: string) => {
 
 export function UserManagement() {
   const queryClient = useQueryClient()
+  const { isAdminOrAbove, isRoot, profile } = useAuth()
   const [savingRoleId, setSavingRoleId] = useState<string | null>(null)
   const [togglingStatusId, setTogglingStatusId] = useState<string | null>(null)
 
@@ -83,7 +87,7 @@ export function UserManagement() {
 
   // Update role mutation
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: UserProfile['role'] }) => {
       setSavingRoleId(userId)
       const { error } = await supabase
         .from('profiles')
@@ -128,7 +132,7 @@ export function UserManagement() {
   })
 
   const handleRoleChange = (userId: string, newRole: string) => {
-    updateRoleMutation.mutate({ userId, newRole })
+    updateRoleMutation.mutate({ userId, newRole: newRole as UserProfile['role'] })
   }
 
   const handleToggleStatus = (userId: string, currentSuspended: boolean) => {
@@ -242,17 +246,27 @@ export function UserManagement() {
                         <Select
                           value={user.role}
                           onValueChange={(value) => handleRoleChange(user.id, value)}
-                          disabled={savingRoleId === user.id}
+                          disabled={
+                            savingRoleId === user.id ||
+                            !isAdminOrAbove ||
+                            user.id === profile?.id // Can't change own role
+                          }
                         >
                           <SelectTrigger className="w-[140px]">
                             <SelectValue placeholder="Select role" />
                           </SelectTrigger>
                           <SelectContent>
-                            {AVAILABLE_ROLES.map((role) => (
-                              <SelectItem key={role} value={role}>
-                                {formatRoleLabel(role)}
-                              </SelectItem>
-                            ))}
+                            {AVAILABLE_ROLES
+                              .filter((role) => {
+                                // Only super_admin (root) can see/assign root role
+                                if (role === 'root') return isRoot
+                                return true
+                              })
+                              .map((role) => (
+                                <SelectItem key={role} value={role}>
+                                  {formatRoleLabel(role)}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -269,7 +283,11 @@ export function UserManagement() {
                           <Switch
                             checked={!user.suspended}
                             onCheckedChange={() => handleToggleStatus(user.id, user.suspended)}
-                            disabled={togglingStatusId === user.id}
+                            disabled={
+                              togglingStatusId === user.id ||
+                              !isAdminOrAbove ||
+                              user.id === profile?.id // Can't suspend yourself
+                            }
                           />
                           <span className="text-xs text-muted-foreground w-[70px]">
                             {user.suspended ? 'Activate' : 'Deactivate'}

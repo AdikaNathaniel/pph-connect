@@ -1,6 +1,6 @@
 import { ReactNode, useMemo } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
+import { Link, useLocation } from 'react-router-dom'
+import { useAuth, UserRole } from '@/contexts/AuthContext'
 import {
   Home,
   Users,
@@ -40,6 +40,7 @@ type NavigationItem = {
   href: string
   icon: React.ComponentType<{ className?: string }>
   badge?: number | string
+  requiredRoles?: UserRole[] // If specified, only these roles can see this item
 }
 
 type NavigationSection = {
@@ -53,10 +54,30 @@ type QuickCreateAction = {
   icon: React.ComponentType<{ className?: string }>
 }
 
+// Helper to format role for display
+const formatRoleLabel = (role: UserRole | undefined): string => {
+  if (!role) return 'User'
+  const labels: Record<UserRole, string> = {
+    root: 'Super Admin',
+    admin: 'Admin',
+    manager: 'Manager',
+    team_lead: 'Team Lead',
+    worker: 'Worker',
+  }
+  return labels[role] || role
+}
+
+// Get badge variant based on role
+const getRoleBadgeVariant = (role: UserRole | undefined): 'default' | 'secondary' | 'destructive' | 'outline' => {
+  if (!role) return 'outline'
+  if (role === 'root') return 'destructive'
+  if (role === 'admin') return 'default'
+  return 'secondary'
+}
+
 export function AppLayout({ children, pageTitle }: AppLayoutProps) {
-  const { user, signOut } = useAuth()
+  const { user, profile, signOut, isManagerOrAbove } = useAuth()
   const location = useLocation()
-  const navigate = useNavigate()
 
   const navigation: NavigationSection[] = useMemo(
     () => [
@@ -64,19 +85,35 @@ export function AppLayout({ children, pageTitle }: AppLayoutProps) {
         title: 'Home',
         items: [
           { title: 'Dashboard', href: '/dashboard', icon: Home },
-          { title: 'Workers', href: '/workers', icon: Users },
-          { title: 'Projects', href: '/projects', icon: FolderOpen },
-          { title: 'Teams', href: '/teams', icon: UserCheck },
-          { title: 'Departments', href: '/departments', icon: Building2 },
+          { title: 'Workers', href: '/workers', icon: Users, requiredRoles: ['root', 'admin', 'manager', 'team_lead'] },
+          { title: 'Projects', href: '/projects', icon: FolderOpen, requiredRoles: ['root', 'admin', 'manager'] },
+          { title: 'Teams', href: '/teams', icon: UserCheck, requiredRoles: ['root', 'admin', 'manager'] },
+          { title: 'Departments', href: '/departments', icon: Building2, requiredRoles: ['root', 'admin'] },
           { title: 'Stats', href: '/stats', icon: BarChart3 },
-          { title: 'Rate Cards', href: '/rates', icon: CreditCard },
-          { title: 'User Management', href: '/users', icon: ShieldCheck },
+          { title: 'Rate Cards', href: '/rates', icon: CreditCard, requiredRoles: ['root', 'admin', 'manager'] },
+          { title: 'User Management', href: '/users', icon: ShieldCheck, requiredRoles: ['root', 'admin'] },
           { title: 'Messages', href: '/messages', icon: Mail },
         ],
       },
     ],
     []
   )
+
+  // Filter navigation items based on user role
+  const filteredNavigation = useMemo(() => {
+    const userRole = profile?.role
+    return navigation.map((section) => ({
+      ...section,
+      items: section.items.filter((item) => {
+        // If no role requirements, show to everyone
+        if (!item.requiredRoles) return true
+        // If user has no role yet, hide role-restricted items
+        if (!userRole) return false
+        // Check if user's role is in the required roles
+        return item.requiredRoles.includes(userRole)
+      }),
+    }))
+  }, [navigation, profile?.role])
 
   const quickCreateActions: QuickCreateAction[] = useMemo(
     () => [
@@ -131,7 +168,7 @@ export function AppLayout({ children, pageTitle }: AppLayoutProps) {
           {/* Navigation */}
           <div className="flex-1 overflow-y-auto px-2 py-2">
             <nav className="space-y-1">
-              {navigation.map((section, index) => (
+              {filteredNavigation.map((section, index) => (
                 <div key={section.title} className={`space-y-1 ${index === 1 ? 'mt-8' : ''}`}>
                   <div className="px-2 py-1.5">
                     <h3 className="text-xs font-medium text-sidebar-foreground/60">{section.title}</h3>
@@ -196,8 +233,8 @@ export function AppLayout({ children, pageTitle }: AppLayoutProps) {
                     >
                       {user?.email || 'email@example.com'}
                     </span>
-                    <Badge variant="outline" className="mt-1 text-xs">
-                      Admin
+                    <Badge variant={getRoleBadgeVariant(profile?.role)} className="mt-1 text-xs">
+                      {formatRoleLabel(profile?.role)}
                     </Badge>
                   </div>
                   <ChevronsUpDown className="h-4 w-4 text-sidebar-foreground/60" />
@@ -242,28 +279,30 @@ export function AppLayout({ children, pageTitle }: AppLayoutProps) {
           <header className="flex h-16 items-center justify-between border-b px-6">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">{pageTitle || 'Dashboard'}</h1>
-              <Badge variant="secondary" className="uppercase tracking-wide text-xs">
-                Admin
+              <Badge variant={getRoleBadgeVariant(profile?.role)} className="uppercase tracking-wide text-xs">
+                {formatRoleLabel(profile?.role)}
               </Badge>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="default" size="sm" className="gap-1.5">
-                  <CirclePlus className="h-4 w-4" />
-                  Quick Create
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {quickCreateActions.map((action) => (
-                  <DropdownMenuItem asChild key={action.href}>
-                    <Link to={action.href} className="flex items-center cursor-pointer gap-2">
-                      <action.icon className="h-4 w-4" />
-                      {action.title}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {isManagerOrAbove && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="default" size="sm" className="gap-1.5">
+                    <CirclePlus className="h-4 w-4" />
+                    Quick Create
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {quickCreateActions.map((action) => (
+                    <DropdownMenuItem asChild key={action.href}>
+                      <Link to={action.href} className="flex items-center cursor-pointer gap-2">
+                        <action.icon className="h-4 w-4" />
+                        {action.title}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </header>
 
           <main className="flex-1 overflow-y-auto">{children}</main>

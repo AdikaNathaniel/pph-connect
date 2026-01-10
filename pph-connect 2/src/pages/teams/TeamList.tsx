@@ -13,6 +13,7 @@ import {
 } from '@tanstack/react-table'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -54,6 +55,7 @@ type Team = {
 export function TeamList() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { isManagerOrAbove } = useAuth()
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
@@ -255,10 +257,12 @@ export function TeamList() {
           <h1 className="text-3xl font-bold">Teams</h1>
           <p className="text-muted-foreground mt-1">Manage language-based teams ({teams?.length || 0} total)</p>
         </div>
-        <Button onClick={() => navigate('/teams/create')}>
-          <Users className="h-4 w-4 mr-2" />
-          Create Team
-        </Button>
+        {isManagerOrAbove && (
+          <Button onClick={() => navigate('/teams/create')}>
+            <Users className="h-4 w-4 mr-2" />
+            Create Team
+          </Button>
+        )}
       </div>
 
       {/* Search and Filters */}

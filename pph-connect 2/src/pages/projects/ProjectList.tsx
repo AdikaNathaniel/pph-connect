@@ -13,6 +13,7 @@ import {
 } from '@tanstack/react-table'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -55,6 +56,7 @@ type Project = {
 export function ProjectList() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { isManagerOrAbove } = useAuth()
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
@@ -274,10 +276,12 @@ export function ProjectList() {
           <h1 className="text-3xl font-bold">Projects</h1>
           <p className="text-muted-foreground mt-1">Manage workforce projects ({projects?.length || 0} total)</p>
         </div>
-        <Button onClick={() => navigate('/projects/create')}>
-          <FolderOpen className="h-4 w-4 mr-2" />
-          Create Project
-        </Button>
+        {isManagerOrAbove && (
+          <Button onClick={() => navigate('/projects/create')}>
+            <FolderOpen className="h-4 w-4 mr-2" />
+            Create Project
+          </Button>
+        )}
       </div>
 
       {/* Search and Filters */}
