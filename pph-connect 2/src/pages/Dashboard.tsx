@@ -1,6 +1,7 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,13 @@ type DashboardMetrics = {
 }
 
 export function Dashboard() {
+  const { isWorker, isManagerOrAbove } = useAuth()
+
+  // Workers should be redirected to their self-service stats page
+  if (isWorker) {
+    return <Navigate to="/my-stats" replace />
+  }
+
   // Fetch dashboard metrics
   const { data: metrics, isLoading } = useQuery({
     queryKey: ['dashboard-metrics'],
@@ -297,39 +305,41 @@ export function Dashboard() {
         </section>
       )}
 
-      {/* Quick Actions */}
-      <section aria-labelledby="quick-actions-heading" className="space-y-3">
-        <div className="flex items-center gap-2">
-          <h2
-            id="quick-actions-heading"
-            className="text-xs font-semibold uppercase text-muted-foreground tracking-wide"
-          >
-            Quick Actions
-          </h2>
-          <Badge variant="secondary" className="text-[0.65rem]">
-            Shortcuts
-          </Badge>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {quickActions.map((action) => (
-            <Link key={action.title} to={action.href}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-muted">
-                      <action.icon className={`h-5 w-5 ${action.color}`} />
+      {/* Quick Actions - Only shown for managers and above */}
+      {isManagerOrAbove && (
+        <section aria-labelledby="quick-actions-heading" className="space-y-3">
+          <div className="flex items-center gap-2">
+            <h2
+              id="quick-actions-heading"
+              className="text-xs font-semibold uppercase text-muted-foreground tracking-wide"
+            >
+              Quick Actions
+            </h2>
+            <Badge variant="secondary" className="text-[0.65rem]">
+              Shortcuts
+            </Badge>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {quickActions.map((action) => (
+              <Link key={action.title} to={action.href}>
+                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-muted">
+                        <action.icon className={`h-5 w-5 ${action.color}`} />
+                      </div>
+                      <div>
+                        <CardTitle className="text-sm font-medium">{action.title}</CardTitle>
+                        <CardDescription className="text-xs">{action.description}</CardDescription>
+                      </div>
                     </div>
-                    <div>
-                      <CardTitle className="text-sm font-medium">{action.title}</CardTitle>
-                      <CardDescription className="text-xs">{action.description}</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </section>
+                  </CardHeader>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* System Status */}
       <section aria-labelledby="system-status-heading">
