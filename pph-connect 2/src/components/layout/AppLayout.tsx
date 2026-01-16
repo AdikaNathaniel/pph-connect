@@ -4,6 +4,7 @@ import { useAuth, UserRole } from '@/contexts/AuthContext'
 import {
   Home,
   Users,
+  User,
   FolderOpen,
   Building2,
   UserCheck,
@@ -91,6 +92,7 @@ export function AppLayout({ children, pageTitle }: AppLayoutProps) {
           { title: 'Departments', href: '/departments', icon: Building2, requiredRoles: ['root', 'admin'] },
           { title: 'Stats', href: '/stats', icon: BarChart3, requiredRoles: ['root', 'admin', 'manager', 'team_lead'] },
           { title: 'My Stats', href: '/my-stats', icon: BarChart3, requiredRoles: ['worker'] },
+          { title: 'My Profile', href: '/my-profile', icon: User, requiredRoles: ['worker'] },
           { title: 'Rate Cards', href: '/rates', icon: CreditCard, requiredRoles: ['root', 'admin', 'manager'] },
           { title: 'User Management', href: '/users', icon: ShieldCheck, requiredRoles: ['root', 'admin'] },
           { title: 'Messages', href: '/messages', icon: Mail },

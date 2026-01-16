@@ -4,7 +4,6 @@ import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -29,7 +28,12 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  ListTodo,
+  Star,
+  GraduationCap,
+  MessageSquare,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import {
   LineChart,
@@ -59,29 +63,25 @@ type Worker = {
   id: string
   hr_id: string
   full_name: string
-  email: string
-  pph_email: string | null
+  email_personal: string
+  email_pph: string | null
   status: string
-  hire_date: string | null
+  hire_date: string
 }
 
 type WorkerAssignment = {
   id: string
   project: {
     id: string
-    name: string
-    code: string
+    project_name: string
+    project_code: string
     status: string
-  }
-  team: {
-    id: string
-    name: string
   } | null
   assigned_at: string
 }
 
 export function WorkerSelfServiceStats() {
-  const { user, profile } = useAuth()
+  const { user } = useAuth()
 
   // Filter states
   const [fromDate, setFromDate] = useState<Date | undefined>(subDays(new Date(), 30))
@@ -90,7 +90,7 @@ export function WorkerSelfServiceStats() {
   const pageSize = 10
 
   // Find the worker record linked to this user
-  const { data: linkedWorker, isLoading: isLoadingWorker, error: workerError } = useQuery({
+  const { data: linkedWorker, isLoading: isLoadingWorker } = useQuery({
     queryKey: ['my-worker-profile', user?.email],
     queryFn: async () => {
       if (!user?.email) return null
@@ -98,8 +98,8 @@ export function WorkerSelfServiceStats() {
       // Try to find worker by email match
       const { data, error } = await supabase
         .from('workers')
-        .select('id, hr_id, full_name, email, pph_email, status, hire_date')
-        .or(`email.eq.${user.email},pph_email.eq.${user.email}`)
+        .select('id, hr_id, full_name, email_personal, email_pph, status, hire_date')
+        .or(`email_personal.eq.${user.email},email_pph.eq.${user.email}`)
         .single()
 
       if (error) {
@@ -122,8 +122,7 @@ export function WorkerSelfServiceStats() {
         .select(`
           id,
           assigned_at,
-          project:workforce_projects!worker_assignments_project_id_fkey(id, name, code, status),
-          team:teams!worker_assignments_team_id_fkey(id, name)
+          project:workforce_projects(id, project_name, project_code, status)
         `)
         .eq('worker_id', linkedWorker.id)
         .is('removed_at', null)
@@ -198,6 +197,39 @@ export function WorkerSelfServiceStats() {
       daysWorked: uniqueDays,
     }
   }, [workStats])
+
+  // Calculate quality score (based on consistency and productivity)
+  const qualityScore = useMemo(() => {
+    if (!workStats || workStats.length === 0) return null
+
+    // Simple quality score based on:
+    // - Consistency (days worked / total days in period)
+    // - Average units per day compared to baseline
+    const daysInPeriod = fromDate && toDate
+      ? Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      : 30
+
+    const daysWorked = new Set(workStats.map((s) => s.work_date)).size
+    const consistencyScore = Math.min((daysWorked / daysInPeriod) * 100, 100)
+
+    // Productivity score (simplified - in real app this would come from backend)
+    const avgUnits = daysWorked > 0
+      ? workStats.reduce((sum, stat) => sum + (stat.units_completed || 0), 0) / daysWorked
+      : 0
+    const productivityScore = Math.min(avgUnits / 50 * 100, 100) // Assuming 50 units/day is baseline
+
+    // Combined score (weighted average)
+    const score = Math.round((consistencyScore * 0.4) + (productivityScore * 0.6))
+    return Math.min(score, 100)
+  }, [workStats, fromDate, toDate])
+
+  // Pending tasks count (based on active assignments without recent activity)
+  const pendingTasks = useMemo(() => {
+    if (!assignments) return 0
+    // Count active project assignments as "pending tasks"
+    // In a real app, this would query actual task/ticket assignments
+    return assignments.filter(a => a.project?.status === 'active').length
+  }, [assignments])
 
   // Calculate earnings over time
   const earningsOverTime = useMemo(() => {
@@ -324,8 +356,116 @@ export function WorkerSelfServiceStats() {
         </CardContent>
       </Card>
 
-      {/* Current Assignments */}
+      {/* Quick Actions */}
       <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Link to="#assignments" onClick={(e) => { e.preventDefault(); document.getElementById('assignments-section')?.scrollIntoView({ behavior: 'smooth' }); }}>
+              <div className="flex flex-col items-center p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                <FolderOpen className="h-8 w-8 text-blue-600 mb-2" />
+                <span className="text-sm font-medium">View Assignments</span>
+                <span className="text-xs text-muted-foreground">{assignments?.length || 0} active</span>
+              </div>
+            </Link>
+            <Link to="/messages">
+              <div className="flex flex-col items-center p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                <MessageSquare className="h-8 w-8 text-green-600 mb-2" />
+                <span className="text-sm font-medium">Message Manager</span>
+                <span className="text-xs text-muted-foreground">Send a message</span>
+              </div>
+            </Link>
+            <div className="flex flex-col items-center p-4 border rounded-lg bg-muted/30 cursor-not-allowed opacity-60">
+              <GraduationCap className="h-8 w-8 text-purple-600 mb-2" />
+              <span className="text-sm font-medium">View Training</span>
+              <span className="text-xs text-muted-foreground">Coming soon</span>
+            </div>
+            <Link to="#earnings" onClick={(e) => { e.preventDefault(); document.getElementById('earnings-section')?.scrollIntoView({ behavior: 'smooth' }); }}>
+              <div className="flex flex-col items-center p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                <DollarSign className="h-8 w-8 text-emerald-600 mb-2" />
+                <span className="text-sm font-medium">View Earnings</span>
+                <span className="text-xs text-muted-foreground">${summaryStats.totalEarnings.toFixed(0)} total</span>
+              </div>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary Cards - Top Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Current Projects</CardTitle>
+            <FolderOpen className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{assignments?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Active assignments
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">This Month's Earnings</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              ${summaryStats.totalEarnings.toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              In selected period
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Tasks</CardTitle>
+            <ListTodo className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pendingTasks}</div>
+            <p className="text-xs text-muted-foreground">
+              {pendingTasks === 0 ? 'All caught up!' : 'Projects needing attention'}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Quality Score</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "text-2xl font-bold",
+                qualityScore === null ? "text-muted-foreground" :
+                qualityScore >= 80 ? "text-green-600" :
+                qualityScore >= 60 ? "text-yellow-600" : "text-red-600"
+              )}>
+                {qualityScore !== null ? `${qualityScore}%` : '—'}
+              </div>
+              {qualityScore !== null && qualityScore >= 80 && (
+                <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {qualityScore === null ? 'No data yet' :
+               qualityScore >= 80 ? 'Excellent performance!' :
+               qualityScore >= 60 ? 'Good progress' : 'Needs improvement'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Current Assignments */}
+      <Card id="assignments-section">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FolderOpen className="h-5 w-5" />
@@ -343,18 +483,13 @@ export function WorkerSelfServiceStats() {
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="font-medium">{assignment.project.name}</p>
-                      <p className="text-sm text-muted-foreground">{assignment.project.code}</p>
+                      <p className="font-medium">{assignment.project?.project_name || 'Unknown Project'}</p>
+                      <p className="text-sm text-muted-foreground">{assignment.project?.project_code || '-'}</p>
                     </div>
-                    <Badge variant={assignment.project.status === 'active' ? 'default' : 'secondary'}>
-                      {assignment.project.status}
+                    <Badge variant={assignment.project?.status === 'active' ? 'default' : 'secondary'}>
+                      {assignment.project?.status || 'unknown'}
                     </Badge>
                   </div>
-                  {assignment.team && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Team: {assignment.team.name}
-                    </p>
-                  )}
                   <p className="text-xs text-muted-foreground mt-1">
                     Assigned: {format(new Date(assignment.assigned_at), 'MMM d, yyyy')}
                   </p>
@@ -423,7 +558,7 @@ export function WorkerSelfServiceStats() {
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Work Stats Summary - Secondary Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -453,21 +588,6 @@ export function WorkerSelfServiceStats() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              ${summaryStats.totalEarnings.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              In selected period
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Days Worked</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -478,11 +598,24 @@ export function WorkerSelfServiceStats() {
             </p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Units/Day</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{summaryStats.avgUnitsPerDay}</div>
+            <p className="text-xs text-muted-foreground">
+              Productivity rate
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Earnings Chart */}
       {earningsOverTime.length > 0 && (
-        <Card>
+        <Card id="earnings-section">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
