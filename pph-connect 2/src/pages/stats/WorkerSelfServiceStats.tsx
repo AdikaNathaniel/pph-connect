@@ -377,16 +377,18 @@ export function WorkerSelfServiceStats() {
                 <span className="text-xs text-muted-foreground">Send a message</span>
               </div>
             </Link>
-            <div className="flex flex-col items-center p-4 border rounded-lg bg-muted/30 cursor-not-allowed opacity-60">
-              <GraduationCap className="h-8 w-8 text-purple-600 mb-2" />
-              <span className="text-sm font-medium">View Training</span>
-              <span className="text-xs text-muted-foreground">Coming soon</span>
-            </div>
-            <Link to="#earnings" onClick={(e) => { e.preventDefault(); document.getElementById('earnings-section')?.scrollIntoView({ behavior: 'smooth' }); }}>
+            <Link to="/my-training">
+              <div className="flex flex-col items-center p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                <GraduationCap className="h-8 w-8 text-purple-600 mb-2" />
+                <span className="text-sm font-medium">View Training</span>
+                <span className="text-xs text-muted-foreground">Modules & gates</span>
+              </div>
+            </Link>
+            <Link to="/my-earnings">
               <div className="flex flex-col items-center p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
                 <DollarSign className="h-8 w-8 text-emerald-600 mb-2" />
                 <span className="text-sm font-medium">View Earnings</span>
-                <span className="text-xs text-muted-foreground">${summaryStats.totalEarnings.toFixed(0)} total</span>
+                <span className="text-xs text-muted-foreground">Detailed breakdown</span>
               </div>
             </Link>
           </div>

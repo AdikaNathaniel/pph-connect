@@ -18,7 +18,11 @@ import {
   BarChart3,
   CreditCard,
   ShieldCheck,
+  GraduationCap,
+  DollarSign,
+  Bell,
 } from 'lucide-react'
+import { useMessageNotifications } from '@/hooks/useMessageNotifications'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,6 +83,7 @@ const getRoleBadgeVariant = (role: UserRole | undefined): 'default' | 'secondary
 export function AppLayout({ children, pageTitle }: AppLayoutProps) {
   const { user, profile, signOut, isManagerOrAbove } = useAuth()
   const location = useLocation()
+  const { unreadCount } = useMessageNotifications()
 
   const navigation: NavigationSection[] = useMemo(
     () => [
@@ -92,6 +97,9 @@ export function AppLayout({ children, pageTitle }: AppLayoutProps) {
           { title: 'Departments', href: '/departments', icon: Building2, requiredRoles: ['root', 'admin'] },
           { title: 'Stats', href: '/stats', icon: BarChart3, requiredRoles: ['root', 'admin', 'manager', 'team_lead'] },
           { title: 'My Stats', href: '/my-stats', icon: BarChart3, requiredRoles: ['worker'] },
+          { title: 'My Assignments', href: '/my-assignments', icon: FolderOpen, requiredRoles: ['worker'] },
+          { title: 'My Training', href: '/my-training', icon: GraduationCap, requiredRoles: ['worker'] },
+          { title: 'My Earnings', href: '/my-earnings', icon: DollarSign, requiredRoles: ['worker'] },
           { title: 'My Profile', href: '/my-profile', icon: User, requiredRoles: ['worker'] },
           { title: 'Rate Cards', href: '/rates', icon: CreditCard, requiredRoles: ['root', 'admin', 'manager'] },
           { title: 'User Management', href: '/users', icon: ShieldCheck, requiredRoles: ['root', 'admin'] },
@@ -286,26 +294,41 @@ export function AppLayout({ children, pageTitle }: AppLayoutProps) {
                 {formatRoleLabel(profile?.role)}
               </Badge>
             </div>
-            {isManagerOrAbove && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="default" size="sm" className="gap-1.5">
-                    <CirclePlus className="h-4 w-4" />
-                    Quick Create
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  {quickCreateActions.map((action) => (
-                    <DropdownMenuItem asChild key={action.href}>
-                      <Link to={action.href} className="flex items-center cursor-pointer gap-2">
-                        <action.icon className="h-4 w-4" />
-                        {action.title}
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <div className="flex items-center gap-3">
+              {isManagerOrAbove && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="default" size="sm" className="gap-1.5">
+                      <CirclePlus className="h-4 w-4" />
+                      Quick Create
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    {quickCreateActions.map((action) => (
+                      <DropdownMenuItem asChild key={action.href}>
+                        <Link to={action.href} className="flex items-center cursor-pointer gap-2">
+                          <action.icon className="h-4 w-4" />
+                          {action.title}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              {/* Notifications Bell */}
+              <Link
+                to="/messages"
+                className="relative p-2 rounded-md hover:bg-accent transition-colors"
+                title="Messages"
+              >
+                <Bell className="h-5 w-5 text-muted-foreground" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-medium text-destructive-foreground">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </Link>
+            </div>
           </header>
 
           <main className="flex-1 overflow-y-auto">{children}</main>

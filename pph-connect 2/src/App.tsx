@@ -21,6 +21,9 @@ import WorkStatsImport from '@/pages/stats/WorkStatsImport'
 import { StatsPage } from '@/pages/stats/StatsPage'
 import { WorkerSelfServiceStats } from '@/pages/stats/WorkerSelfServiceStats'
 import { WorkerProfile } from '@/pages/worker/WorkerProfile'
+import { WorkerAssignments } from '@/pages/worker/WorkerAssignments'
+import { WorkerTraining } from '@/pages/worker/WorkerTraining'
+import { WorkerEarnings } from '@/pages/worker/WorkerEarnings'
 import RateCardsPage from '@/pages/rates/RateCardsPage'
 import { UserManagement } from '@/pages/users/UserManagement'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -228,6 +231,36 @@ function App() {
           <ProtectedRoute>
             <AppLayout pageTitle="My Profile">
               <WorkerProfile />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-assignments"
+        element={
+          <ProtectedRoute>
+            <AppLayout pageTitle="My Assignments">
+              <WorkerAssignments />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-training"
+        element={
+          <ProtectedRoute>
+            <AppLayout pageTitle="My Training">
+              <WorkerTraining />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-earnings"
+        element={
+          <ProtectedRoute>
+            <AppLayout pageTitle="My Earnings">
+              <WorkerEarnings />
             </AppLayout>
           </ProtectedRoute>
         }
